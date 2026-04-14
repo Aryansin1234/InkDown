@@ -26,8 +26,8 @@ InkDown turns raw Markdown into **pixel-perfect PDF and Word documents** — wit
 
 ```
   ┌─────────────┐      ┌──────────────┐      ┌──────────────────┐
-  │  Markdown    │ ───▶ │   InkDown    │ ───▶ │  PDF  or  DOCX   │
-  │  (.md file)  │      │  ⚡ Engine    │      │  ready to share  │
+  │  Markdown   │ ───▶ │   InkDown    │ ───▶ │  PDF  or  DOCX   │
+  │  (.md file) │      │  ⚡ Engine    │      │  ready to share  │
   └─────────────┘      └──────────────┘      └──────────────────┘
 ```
 
