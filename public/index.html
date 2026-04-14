@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>InkDown — Markdown to PDF & DOCX</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <meta name="description" content="Convert Markdown to beautifully formatted PDFs and DOCX files — syntax highlighting, smart tables, images, and perfect page layout.">
+  <script>
+    // Apply saved theme before first paint to avoid flash
+    (function() {
+      const t = localStorage.getItem('md-theme') || 'dark';
+      document.documentElement.setAttribute('data-theme', t);
+    })();
+  </script>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- marked.js for live preview -->
+  <script src="https://cdn.jsdelivr.net/npm/marked@13/marked.min.js"></script>
+
+  <!-- highlight.js for preview -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11/styles/github.min.css" id="hljs-light">
+  <script src="https://cdn.jsdelivr.net/npm/highlight.js@11/highlight.min.js"></script>
+
+  <!-- GSAP + ScrollTrigger for animations -->
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3/dist/gsap.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3/dist/ScrollTrigger.min.js"></script>
+
+  <link rel="stylesheet" href="app.css">
+</head>
+<body>
+
+  <!-- ── Navigation ─────────────────────────────────────────── -->
+  <nav class="nav" id="nav">
+    <div class="nav-inner container">
+      <a class="nav-logo" href="#">
+        <div class="nav-logo-glyph">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        </div>
+        <span class="nav-logo-text">Ink<span class="nav-logo-accent">Down</span></span>
+      </a>
+
+      <div class="nav-center" id="navLinks">
+        <a href="#features" class="nav-link" data-section="features">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+          Features
+        </a>
+        <a href="#how-it-works" class="nav-link" data-section="how-it-works">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          How It Works
+        </a>
+        <a href="#app" class="nav-link" data-section="app">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Try It
+        </a>
+        <div class="nav-link-indicator" id="navIndicator"></div>
+      </div>
+
+      <div class="nav-right">
+        <!-- Theme toggle -->
+        <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+          <svg class="theme-icon theme-icon-sun" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+          <svg class="theme-icon theme-icon-moon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        </button>
+        <a href="#app" class="nav-cta-btn">
+          <span>Convert Now</span>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </a>
+      </div>
+
+      <button class="hamburger" id="hamburger" aria-label="Toggle menu">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- Mobile slide-in panel (outside nav so it doesn't shift content) -->
+  <div class="mobile-panel" id="mobilePanel">
+    <div class="mobile-panel-backdrop" id="mobilePanelBackdrop"></div>
+    <div class="mobile-panel-sheet" id="mobilePanelSheet">
+      <div class="mobile-panel-header">
+        <a class="nav-logo" href="#" onclick="closeMobilePanel()">
+          <div class="nav-logo-glyph">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          </div>
+          <span class="nav-logo-text">Ink<span class="nav-logo-accent">Down</span></span>
+        </a>
+        <button class="mobile-panel-close" id="mobilePanelClose" aria-label="Close menu">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+
+      <nav class="mobile-panel-nav">
+        <a href="#features" class="mobile-nav-link" data-index="0">
+          <div class="mobile-nav-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+          </div>
+          <div class="mobile-nav-text">
+            <span class="mobile-nav-title">Features</span>
+            <span class="mobile-nav-desc">What makes InkDown powerful</span>
+          </div>
+          <svg class="mobile-nav-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+        </a>
+        <a href="#how-it-works" class="mobile-nav-link" data-index="1">
+          <div class="mobile-nav-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          </div>
+          <div class="mobile-nav-text">
+            <span class="mobile-nav-title">How It Works</span>
+            <span class="mobile-nav-desc">Three simple steps</span>
+          </div>
+          <svg class="mobile-nav-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+        </a>
+        <a href="#app" class="mobile-nav-link" data-index="2">
+          <div class="mobile-nav-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          </div>
+          <div class="mobile-nav-text">
+            <span class="mobile-nav-title">Try It</span>
+            <span class="mobile-nav-desc">Start converting right away</span>
+          </div>
+          <svg class="mobile-nav-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+        </a>
+      </nav>
+
+      <div class="mobile-panel-footer">
+        <div class="mobile-panel-theme">
+          <span class="mobile-panel-theme-label">Theme</span>
+          <button class="theme-toggle" id="mobileThemeToggle" aria-label="Toggle theme">
+            <svg class="theme-icon theme-icon-sun" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+            <svg class="theme-icon theme-icon-moon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+          </button>
+        </div>
+        <a href="#app" class="nav-cta-btn mobile-panel-cta" onclick="closeMobilePanel()">
+          <span>Convert Now</span>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Hero ───────────────────────────────────────────────── -->
+  <section class="hero" id="hero">
+    <!-- Animated background -->
+    <div class="hero-stripes" aria-hidden="true"></div>
+    <div class="hero-glow hero-glow-red"  aria-hidden="true"></div>
+    <div class="hero-glow hero-glow-blue" aria-hidden="true"></div>
+
+    <div class="container hero-content">
+      <div class="hero-badge animate-in">
+        <span class="badge-dot"></span>
+        <span>PDF &amp; DOCX export — live preview</span>
+      </div>
+
+      <h1 class="hero-headline animate-in">
+        Your&nbsp;Markdown.<br>
+        <span class="hero-accent">Beautiful&nbsp;Docs.</span>
+      </h1>
+
+      <p class="hero-sub animate-in">
+        Drop your <code>.md</code> file, paste your text, or point to a URL.
+        Export a pixel-perfect <strong>PDF</strong> or an editable <strong>DOCX</strong> — with syntax highlighting, smart tables, TOC, and zero overflow.
+      </p>
+
+      <div class="hero-actions animate-in">
+        <a href="#app" class="btn-pill btn-cta">Start Converting</a>
+        <a href="#features" class="btn-ghost">See Features ↓</a>
+      </div>
+
+      <!-- Stats strip -->
+      <div class="hero-stats animate-in" aria-hidden="true">
+        <div class="hero-stat">
+          <span class="hero-stat-num">190+</span>
+          <span class="hero-stat-label">Languages</span>
+        </div>
+        <div class="hero-stat-sep"></div>
+        <div class="hero-stat">
+          <span class="hero-stat-num">2</span>
+          <span class="hero-stat-label">Output formats</span>
+        </div>
+        <div class="hero-stat-sep"></div>
+        <div class="hero-stat">
+          <span class="hero-stat-num">0</span>
+          <span class="hero-stat-label">Layout overflows</span>
+        </div>
+        <div class="hero-stat-sep"></div>
+        <div class="hero-stat">
+          <span class="hero-stat-num">Local</span>
+          <span class="hero-stat-label">Your data stays here</span>
+        </div>
+      </div>
+
+      <!-- Keyboard shortcuts display -->
+      <div class="hero-keys animate-in" aria-hidden="true">
+        <div class="key-group">
+          <kbd class="key">⌘</kbd><kbd class="key">V</kbd>
+          <span class="key-label">Paste markdown</span>
+        </div>
+        <div class="key-sep">then</div>
+        <div class="key-group">
+          <kbd class="key">⌘</kbd><kbd class="key">↵</kbd>
+          <span class="key-label">Convert to PDF/DOCX</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── App Panel ──────────────────────────────────────────── -->
+  <section class="section-app" id="app">
+    <div class="container">
+
+      <div class="section-label animate-in">CONVERTER</div>
+      <h2 class="section-heading animate-in">Three ways to convert</h2>
+      <p class="section-sub animate-in">Editor, file upload, or URL — pick your workflow.</p>
+
+      <div class="app-panel animate-in" id="appPanel">
+
+        <!-- Tabs -->
+        <div class="panel-tabs" role="tablist">
+          <button class="tab active" data-tab="editor" role="tab" aria-selected="true">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+            Editor
+          </button>
+          <button class="tab" data-tab="upload" role="tab" aria-selected="false">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            Upload
+          </button>
+          <button class="tab" data-tab="url" role="tab" aria-selected="false">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+            URL
+          </button>
+          <div class="tab-indicator" id="tabIndicator"></div>
+        </div>
+
+        <!-- Panel body -->
+        <div class="panel-body">
+
+          <!-- Editor pane -->
+          <div class="editor-pane" id="editorPane">
+            <div class="pane-header">
+              <span class="pane-title">Markdown</span>
+              <div class="pane-actions">
+                <button class="pane-btn" id="clearBtn" title="Clear">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+                </button>
+                <button class="pane-btn" id="copyBtn" title="Copy">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                </button>
+              </div>
+            </div>
+
+            <!-- Markdown formatting toolbar -->
+            <div class="md-toolbar" id="mdToolbar">
+              <button class="tb-btn tb-text" data-action="h2" title="Heading 2">H2</button>
+              <button class="tb-btn tb-text" data-action="h3" title="Heading 3">H3</button>
+              <span class="tb-sep"></span>
+              <button class="tb-btn" data-action="bold" title="Bold (⌘B)">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 4h8a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"/><path d="M6 12h9a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"/></svg>
+              </button>
+              <button class="tb-btn" data-action="italic" title="Italic (⌘I)">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="4" x2="10" y2="4"/><line x1="14" y1="20" x2="5" y2="20"/><line x1="15" y1="4" x2="9" y2="20"/></svg>
+              </button>
+              <button class="tb-btn" data-action="strike" title="Strikethrough">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><path d="M16 6C16 6 14.5 4 12 4C9.5 4 7 5.5 7 8C7 9.3 7.6 10.2 8.5 10.8"/><path d="M8 18C8 18 9.5 20 12 20C14.5 20 17 18.5 17 16C17 14.7 16.4 13.8 15.5 13.2"/></svg>
+              </button>
+              <span class="tb-sep"></span>
+              <button class="tb-btn" data-action="code" title="Inline code">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+              </button>
+              <button class="tb-btn" data-action="codeblock" title="Code block">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><polyline points="9 9 6 12 9 15" stroke-width="2"/><polyline points="15 9 18 12 15 15" stroke-width="2"/></svg>
+              </button>
+              <span class="tb-sep"></span>
+              <button class="tb-btn" data-action="link" title="Link">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+              </button>
+              <button class="tb-btn" data-action="quote" title="Blockquote">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21c3 0 7-1 7-8V5c0-1.25-.756-2.017-2-2H4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2 1 0 1 0 1 1v1c0 1-1 2-2 2s-1 .008-1 1.031V20c0 1 0 1 1 1z"/><path d="M15 21c3 0 7-1 7-8V5c0-1.25-.757-2.017-2-2h-4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2h.75c0 2.25.25 4-2.75 4v3c0 1 0 1 1 1z"/></svg>
+              </button>
+              <button class="tb-btn" data-action="ul" title="Bullet list">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="9" y1="6" x2="20" y2="6"/><line x1="9" y1="12" x2="20" y2="12"/><line x1="9" y1="18" x2="20" y2="18"/><circle cx="4" cy="6" r="2" fill="currentColor" stroke="none"/><circle cx="4" cy="12" r="2" fill="currentColor" stroke="none"/><circle cx="4" cy="18" r="2" fill="currentColor" stroke="none"/></svg>
+              </button>
+              <button class="tb-btn" data-action="ol" title="Numbered list">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="10" y1="6" x2="21" y2="6"/><line x1="10" y1="12" x2="21" y2="12"/><line x1="10" y1="18" x2="21" y2="18"/><path d="M4 6h1v4" stroke-linecap="round"/><path d="M4 10h2" stroke-linecap="round"/><path d="M6 18H4c0-1 2-2 2-3s-1-1.5-2-1" stroke-linecap="round"/></svg>
+              </button>
+              <span class="tb-sep"></span>
+              <button class="tb-btn" data-action="table" title="Insert table">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18"/></svg>
+              </button>
+              <button class="tb-btn" data-action="hr" title="Horizontal rule">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><line x1="19" y1="8" x2="19" y2="16" stroke-width="1" opacity="0.5"/><line x1="5" y1="8" x2="5" y2="16" stroke-width="1" opacity="0.5"/></svg>
+              </button>
+              <button class="tb-btn" data-action="pagebreak" title="Page break">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="3" y1="14" x2="21" y2="14" stroke-dasharray="3 2"/></svg>
+              </button>
+            </div>
+
+            <textarea
+              id="mdEditor"
+              class="md-editor"
+              placeholder="# Hello World&#10;&#10;Start typing your **Markdown** here..."
+              spellcheck="false"
+            ></textarea>
+            <div class="pane-footer">
+              <div class="doc-stats" id="docStats">
+                <span class="stat-item" id="statWords">0 words</span>
+                <span class="stat-sep">·</span>
+                <span class="stat-item" id="statHeadings">0 headings</span>
+                <span class="stat-sep">·</span>
+                <span class="stat-item stat-pages" id="statPages">~1 page</span>
+              </div>
+              <span id="charCount" class="char-count"></span>
+            </div>
+          </div>
+
+          <!-- Upload pane -->
+          <div class="upload-pane hidden" id="uploadPane">
+            <div
+              class="drop-zone"
+              id="dropZone"
+              role="button"
+              tabindex="0"
+              aria-label="Drop a Markdown file here or click to browse"
+            >
+              <div class="drop-zone-inner">
+                <div class="drop-icon">
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+                </div>
+                <p class="drop-title">Drop your <code>.md</code> file here</p>
+                <p class="drop-sub">or <label class="drop-browse" for="fileInput">browse files</label></p>
+                <input type="file" id="fileInput" accept=".md,.markdown,.txt" hidden>
+                <div class="drop-hint">Supports .md · .markdown · .txt</div>
+              </div>
+            </div>
+
+            <!-- File selected state -->
+            <div class="file-selected hidden" id="fileSelected">
+              <div class="file-card">
+                <div class="file-icon">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                </div>
+                <div class="file-info">
+                  <span class="file-name" id="fileName">document.md</span>
+                  <span class="file-size" id="fileSize">0 KB</span>
+                </div>
+                <button class="file-remove" id="fileRemove" aria-label="Remove file">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- URL pane -->
+          <div class="url-pane hidden" id="urlPane">
+            <div class="url-input-wrap">
+              <svg class="url-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+              <input
+                type="url"
+                id="urlInput"
+                class="url-field"
+                placeholder="https://raw.githubusercontent.com/.../README.md"
+              >
+              <button class="url-load-btn" id="urlLoadBtn">Load</button>
+            </div>
+            <p class="url-hint">Paste a public URL to a raw <code>.md</code> file. GitHub raw links work great.</p>
+
+            <!-- URL preview once loaded -->
+            <div class="url-loaded hidden" id="urlLoaded">
+              <div class="url-loaded-badge">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                <span id="urlLoadedLabel">Loaded</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Preview pane (shown alongside editor/url; hidden on upload) -->
+          <div class="preview-pane" id="previewPane">
+            <!-- macOS window chrome -->
+            <div class="macos-window">
+              <div class="macos-titlebar">
+                <div class="macos-dots">
+                  <span class="dot dot-red"></span>
+                  <span class="dot dot-yellow"></span>
+                  <span class="dot dot-green"></span>
+                </div>
+                <span class="macos-title">Preview</span>
+              </div>
+              <div class="macos-body">
+                <iframe id="previewFrame" class="preview-frame" title="Markdown preview" sandbox="allow-same-origin"></iframe>
+                <div class="preview-empty" id="previewEmpty">
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                  <p>Your preview will appear here</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Options bar -->
+        <div class="options-bar">
+          <div class="options-group">
+            <label class="toggle-label">
+              <span class="toggle-wrap">
+                <input type="checkbox" id="tocToggle" class="toggle-input">
+                <span class="toggle-track"><span class="toggle-thumb"></span></span>
+              </span>
+              <span class="toggle-text">
+                <span class="toggle-title">Table of Contents</span>
+                <span class="toggle-desc">Auto-generate from headings</span>
+              </span>
+            </label>
+
+            <label class="toggle-label">
+              <span class="toggle-wrap">
+                <input type="checkbox" id="autoBreakToggle" class="toggle-input">
+                <span class="toggle-track"><span class="toggle-thumb"></span></span>
+              </span>
+              <span class="toggle-text">
+                <span class="toggle-title">Auto Page Breaks</span>
+                <span class="toggle-desc">New page before each H1</span>
+              </span>
+            </label>
+          </div>
+
+          <div class="options-title">
+            <label class="title-label" for="titleInput">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="9" x2="20" y2="9"/><line x1="4" y1="15" x2="20" y2="15"/><line x1="10" y1="3" x2="8" y2="21"/><line x1="16" y1="3" x2="14" y2="21"/></svg>
+              Document Title
+            </label>
+            <input
+              type="text"
+              id="titleInput"
+              class="title-input"
+              placeholder="Optional — defaults to filename"
+            >
+          </div>
+        </div>
+
+        <!-- Convert bar -->
+        <div class="convert-bar">
+          <div class="convert-info" id="convertInfo">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            <span id="convertInfoText">PDF renders in ~5 seconds</span>
+          </div>
+
+          <!-- Format selector — card style -->
+          <div class="format-cards" role="group" aria-label="Output format">
+            <button class="format-card active" data-format="pdf" aria-pressed="true">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+              <span class="format-card-label">PDF</span>
+              <span class="format-card-desc">Print-ready</span>
+            </button>
+            <button class="format-card" data-format="docx" aria-pressed="false">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="8" y1="9" x2="11" y2="9"/></svg>
+              <span class="format-card-label">DOCX</span>
+              <span class="format-card-desc">Editable</span>
+            </button>
+          </div>
+
+          <button class="btn-convert" id="convertBtn">
+            <span class="btn-convert-idle">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              <span id="convertBtnLabel">Generate PDF</span>
+            </span>
+            <span class="btn-convert-loading hidden">
+              <svg class="spin" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+              <span id="loadingStepText">Generating…</span>
+            </span>
+          </button>
+        </div>
+
+        <!-- Toast notifications -->
+        <div class="toast-container" id="toastContainer" aria-live="polite"></div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ── How it works ───────────────────────────────────────── -->
+  <section class="section-how" id="how-it-works">
+    <div class="container">
+      <div class="section-label animate-in">HOW IT WORKS</div>
+      <h2 class="section-heading animate-in">From text to PDF in three steps</h2>
+
+      <div class="steps">
+        <div class="step animate-in">
+          <div class="step-number">01</div>
+          <div class="step-content">
+            <h3>Provide your Markdown</h3>
+            <p>Type directly in the editor, drag-and-drop a <code>.md</code> file, or paste a raw URL from GitHub, GitLab, or any public source.</p>
+          </div>
+        </div>
+        <div class="step-connector animate-in" aria-hidden="true">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </div>
+        <div class="step animate-in">
+          <div class="step-number">02</div>
+          <div class="step-content">
+            <h3>Tune the options</h3>
+            <p>Toggle a Table of Contents, enable automatic page breaks at every chapter, or set a custom document title shown in the footer.</p>
+          </div>
+        </div>
+        <div class="step-connector animate-in" aria-hidden="true">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </div>
+        <div class="step animate-in">
+          <div class="step-number">03</div>
+          <div class="step-content">
+            <h3>Download your PDF</h3>
+            <p>Headless Chrome renders a pixel-perfect A4 PDF — no layout hacks, no overflow, proper page numbers. Ready to share.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Features ───────────────────────────────────────────── -->
+  <section class="section-features" id="features">
+    <div class="container">
+      <div class="section-label animate-in">FEATURES</div>
+      <h2 class="section-heading animate-in">Everything your docs need</h2>
+
+      <div class="features-grid">
+
+        <div class="feature-row animate-in">
+          <div class="feature-icon feature-icon-red">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+          </div>
+          <div class="feature-body">
+            <h3 class="feature-title">Syntax Highlighting</h3>
+            <p class="feature-desc">190+ languages. GitHub-light theme. Long lines wrap cleanly — no overflow.</p>
+          </div>
+        </div>
+
+        <div class="feature-row animate-in">
+          <div class="feature-icon feature-icon-blue">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18"/></svg>
+          </div>
+          <div class="feature-body">
+            <h3 class="feature-title">Smart Tables</h3>
+            <p class="feature-desc">Tables scale to fit page width. Cell text wraps. Never bleeds off the edge.</p>
+          </div>
+        </div>
+
+        <div class="feature-row animate-in">
+          <div class="feature-icon feature-icon-green">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+          </div>
+          <div class="feature-body">
+            <h3 class="feature-title">Image Handling</h3>
+            <p class="feature-desc">Local images base64-inlined. Remote images constrained to page width.</p>
+          </div>
+        </div>
+
+        <div class="feature-row animate-in">
+          <div class="feature-icon feature-icon-yellow">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
+          </div>
+          <div class="feature-body">
+            <h3 class="feature-title">Page Break Control</h3>
+            <p class="feature-desc">Manual <code>&lt;!-- pagebreak --&gt;</code> or auto-break before every H1.</p>
+          </div>
+        </div>
+
+        <div class="feature-row animate-in">
+          <div class="feature-icon feature-icon-red">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+          </div>
+          <div class="feature-body">
+            <h3 class="feature-title">Auto Table of Contents</h3>
+            <p class="feature-desc">All headings become clickable anchor links with correct nesting.</p>
+          </div>
+        </div>
+
+        <div class="feature-row animate-in">
+          <div class="feature-icon feature-icon-blue">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
+          </div>
+          <div class="feature-body">
+            <h3 class="feature-title">Page Numbers & Title</h3>
+            <p class="feature-desc">Footer on every page — document title + page X / Y. Professional.</p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Footer ─────────────────────────────────────────────── -->
+  <footer class="footer">
+    <div class="container footer-inner">
+      <div class="footer-brand">
+        <svg class="nav-logo-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        <span class="nav-logo-text">Ink<span class="nav-logo-accent">Down</span></span>
+      </div>
+      <p class="footer-tagline">Built with Puppeteer, marked, and highlight.js.</p>
+      <p class="footer-copy">Runs locally. Your documents never leave your machine.</p>
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

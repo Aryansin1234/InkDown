@@ -1,0 +1,8 @@
+node_modules/
+output/
+*.pdf
+*.docx
+.DS_Store
+*.log
+tmp/
+.env
