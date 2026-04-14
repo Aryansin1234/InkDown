@@ -20,14 +20,14 @@
 
 ## ✨ What is InkDown?
 
-InkDown turns raw Markdown into **pixel-perfect PDF and Word documents** — with zero config. Write once, export everywhere: boardroom-ready reports, technical docs, or project handoffs.
+InkDown turns raw Markdown into **pixel-perfect PDFs** and **native Word documents** — with zero config. Write once, export beautifully: boardroom-ready reports, technical docs, or project handoffs.
 
 > *Think of it as a print button for your `.md` files.*
 
 ```
   ┌─────────────┐      ┌──────────────┐      ┌──────────────────┐
-  │  Markdown   │ ───▶ │   InkDown    │ ───▶ │  PDF  or  DOCX   │
-  │  (.md file) │      │  ⚡ Engine    │      │  ready to share  │
+  │  Markdown    │ ───▶ │   InkDown    │ ───▶ │   Pixel-perfect  │
+  │  (.md file)  │      │  ⚡ Engine    │      │   PDF  or  DOCX  │
   └─────────────┘      └──────────────┘      └──────────────────┘
 ```
 
@@ -45,7 +45,9 @@ InkDown turns raw Markdown into **pixel-perfect PDF and Word documents** — wit
 | 📑 | **Table of Contents** | One-click TOC with clickable anchor links |
 | 🔢 | **Page Numbers** | Footer on every page: *Title — Page X / Y* |
 | 🌗 | **Dark & Light Theme** | Toggle in the web UI, preference persists across sessions |
-| ⚡ | **Dual Output** | PDF (Puppeteer/Chrome) + Word DOCX (programmatic OOXML) |
+| ⚡ | **PDF Output** | Headless Chrome rendering via Puppeteer, A4 format |
+| 📝 | **DOCX Output** | Native Word documents via Pandoc — real heading styles, native TOC |
+| 🧠 | **Smart Analyzer** | AST-based pre-processing — fixes heading hierarchy, detects ASCII art, normalizes structure |
 
 ---
 
@@ -57,6 +59,14 @@ InkDown turns raw Markdown into **pixel-perfect PDF and Word documents** — wit
 # Clone & install
 git clone <repo-url> && cd Smart_MarkDown_Parser
 npm install
+
+# Install Pandoc (required for DOCX export)
+# macOS:
+brew install pandoc
+# Linux:
+# sudo apt install pandoc
+# Windows:
+# choco install pandoc
 
 # Launch
 node server.js
@@ -83,7 +93,6 @@ Then open **[http://localhost:3000](http://localhost:3000)** — that's it.
 | 📑 Table of Contents | Auto-generated TOC linked to your headings |
 | 📄 Auto Page Breaks | Insert a break before every H1 |
 | ✏️ Document Title | Override the footer title |
-| 📥 Format | Choose **PDF** or **DOCX** before exporting |
 
 ### ⌨️ Keyboard Shortcuts
 
@@ -99,7 +108,7 @@ Then open **[http://localhost:3000](http://localhost:3000)** — that's it.
 Convert files straight from the terminal — no server required.
 
 ```bash
-node src/cli.js [options] <input.md> [output.pdf]
+node src/cli.js [options] <input.md> [output.pdf|output.docx]
 ```
 
 ### Flags
@@ -108,23 +117,31 @@ node src/cli.js [options] <input.md> [output.pdf]
 |------|-------------|
 | `--toc` | Prepend a Table of Contents |
 | `--auto-break` | Page break before every H1 |
+| `--format <fmt>` | Output format: `pdf` (default) or `docx` |
 | `--title <text>` | Custom footer title |
 | `-h`, `--help` | Show help |
 
 ### Examples
 
 ```bash
-# Simple conversion
+# Simple PDF conversion
 node src/cli.js README.md
 
-# Full-featured export
+# PDF with all options
 node src/cli.js --toc --auto-break docs/guide.md output/guide.pdf
+
+# DOCX export
+node src/cli.js --format docx README.md output/README.docx
+
+# DOCX with TOC and auto page breaks
+node src/cli.js --format docx --toc --auto-break docs/guide.md output/guide.docx
 
 # Custom title
 node src/cli.js --title "API Reference v2" api.md docs/api-ref.pdf
-```
 
-> **Note:** CLI outputs PDF only. Use the web app for DOCX.
+# Auto-detect format from output extension
+node src/cli.js README.md output/README.docx
+```
 
 ---
 
@@ -170,7 +187,7 @@ const greet = name => `Hello, ${name}!`;
 
 ## 🔌 API
 
-Single endpoint. Send Markdown, get documents.
+Single endpoint. Send Markdown, get a PDF or DOCX.
 
 ### `POST /api/convert`
 
@@ -198,13 +215,23 @@ Single endpoint. Send Markdown, get documents.
 ```bash
 # File → PDF with TOC
 curl -X POST http://localhost:3000/api/convert \
-  -F "file=@README.md" -F "format=pdf" -F "toc=true" \
+  -F "file=@README.md" -F "toc=true" \
   -o output.pdf
 
 # Text → DOCX
 curl -X POST http://localhost:3000/api/convert \
   -F "text=# Hello World" -F "format=docx" -F "title=My Doc" \
   -o output.docx
+
+# File → DOCX with TOC and auto breaks
+curl -X POST http://localhost:3000/api/convert \
+  -F "file=@README.md" -F "format=docx" -F "toc=true" -F "autoBreak=true" \
+  -o output.docx
+
+# Text → PDF
+curl -X POST http://localhost:3000/api/convert \
+  -F "text=# Hello World" -F "title=My Doc" \
+  -o output.pdf
 
 # URL → PDF
 curl -X POST http://localhost:3000/api/convert \
@@ -219,17 +246,20 @@ curl -X POST http://localhost:3000/api/convert \
 ```
 ├── server.js              Express server & /api/convert endpoint
 ├── src/
+│   ├── analyzer.js        Smart Markdown Analyzer (remark AST plugins)
 │   ├── converter.js       PDF engine — Puppeteer + marked + highlight.js
-│   ├── docxConverter.js   DOCX engine — node-html-parser + docx (OOXML)
-│   ├── cli.js             CLI entry point
+│   ├── docxConverter.js   DOCX engine — Pandoc + Smart Analyzer
+│   ├── cli.js             CLI entry point (PDF + DOCX)
 │   └── styles.css         Print stylesheet for PDF rendering
 ├── public/
-│   ├── index.html         Web app shell
+│   ├── index.html         Web app shell (PDF/DOCX format toggle)
 │   ├── app.css            UI design system (dark/light themes)
 │   └── app.js             Frontend logic & GSAP animations
 ├── samples/
 │   └── test.md            Sample covering all features
-└── output/                Default CLI output directory
+├── output/                Default CLI output directory
+├── reference.docx         Optional Pandoc reference template for DOCX styling
+└── ARCHITECTURE.md        Technical deep-dive & system design
 ```
 
 ---
@@ -239,10 +269,10 @@ curl -X POST http://localhost:3000/api/convert \
 | Package | Role |
 |---------|------|
 | **Puppeteer** | Headless Chrome → PDF rendering |
-| **marked** | Markdown → HTML (GFM) |
+| **Pandoc** | Markdown → native Word DOCX (system binary) |
+| **marked** | Markdown → HTML (GFM spec) |
 | **highlight.js** | Syntax highlighting (190+ languages) |
-| **docx** | Programmatic OOXML document generation |
-| **node-html-parser** | DOM parsing for HTML → DOCX pipeline |
+| **unified / remark** | Markdown AST parsing & smart analysis plugins |
 | **Express** | HTTP server |
 | **multer** | Multipart file upload handling |
 | **GSAP** | Frontend animations (CDN) |
@@ -252,8 +282,10 @@ curl -X POST http://localhost:3000/api/convert \
 ## 🛠️ Scripts
 
 ```bash
-npm test          # Convert samples/test.md → output/test.pdf
-npm run convert   # Alias for node src/cli.js
+npm test            # Convert samples/test.md → output/test.pdf
+npm run test:docx   # Convert samples/test.md → output/test.docx
+npm run convert     # Alias for node src/cli.js
+npm run dev         # Start development server
 ```
 
 ---

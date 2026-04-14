@@ -66,12 +66,13 @@ app.post('/api/convert', upload.single('file'), async (req, res) => {
     }
 
     // ── Parse options ───────────────────────────────────────
-    const format = (req.body.format || 'pdf').toLowerCase(); // 'pdf' | 'docx'
     const opts = {
       toc:       req.body.toc       === 'true' || req.body.toc       === true,
       autoBreak: req.body.autoBreak === 'true' || req.body.autoBreak === true,
       title:     req.body.title     ? String(req.body.title).trim()  : undefined,
     };
+    const format = (req.body.format || 'pdf').toLowerCase();
+    const isDocx = format === 'docx';
 
     // ── Derive base filename ─────────────────────────────────
     let baseName = 'document';
@@ -81,39 +82,40 @@ app.post('/api/convert', upload.single('file'), async (req, res) => {
       baseName = path.basename(req.file.originalname, path.extname(req.file.originalname));
     }
 
-    if (format === 'docx') {
-      // ── DOCX path — uses programmatic docx package (Word-compatible) ──
-      const markdown    = fs.readFileSync(inputPath, 'utf-8');
-      const docxBuffer  = await convertToDocx(markdown, {
-        title:     opts.title || baseName,
+    // ── Convert based on format ─────────────────────────────
+    if (isDocx) {
+      // DOCX path — read markdown, convert via Pandoc
+      const mdContent = fs.readFileSync(inputPath, 'utf-8');
+      const { buffer } = await convertToDocx(mdContent, {
+        title: opts.title || baseName,
+        toc: opts.toc,
         autoBreak: opts.autoBreak,
       });
 
       const filename = `${baseName}.docx`;
       res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
       res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
-      res.setHeader('Content-Length', docxBuffer.length);
+      res.send(buffer);
       cleanup(ownInput ? inputPath : null);
-      return res.end(docxBuffer);
+    } else {
+      // PDF path — existing Puppeteer pipeline
+      outputPath = tmpFile('.pdf');
+      await convert(inputPath, outputPath, opts);
+
+      const filename = `${baseName}.pdf`;
+
+      // ── Stream PDF to client ─────────────────────────────────
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+
+      const stream = fs.createReadStream(outputPath);
+      stream.pipe(res);
+      stream.on('end', () => cleanup(ownInput ? inputPath : null, outputPath));
+      stream.on('error', (err) => {
+        cleanup(ownInput ? inputPath : null, outputPath);
+        if (!res.headersSent) res.status(500).json({ error: err.message });
+      });
     }
-
-    // ── PDF path ─────────────────────────────────────────────
-    outputPath = tmpFile('.pdf');
-    await convert(inputPath, outputPath, opts);
-
-    const filename = `${baseName}.pdf`;
-
-    // ── Stream PDF to client ─────────────────────────────────
-    res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
-
-    const stream = fs.createReadStream(outputPath);
-    stream.pipe(res);
-    stream.on('end', () => cleanup(ownInput ? inputPath : null, outputPath));
-    stream.on('error', (err) => {
-      cleanup(ownInput ? inputPath : null, outputPath);
-      if (!res.headersSent) res.status(500).json({ error: err.message });
-    });
 
   } catch (err) {
     cleanup(ownInput ? inputPath : null, outputPath);

@@ -13,6 +13,7 @@ const path     = require('path');
 const puppeteer = require('puppeteer');
 const { marked } = require('marked');
 const hljs     = require('highlight.js');
+const { analyze } = require('./analyzer');
 
 // ── Slugify helper ────────────────────────────────────────────
 function slugify(text) {
@@ -211,8 +212,21 @@ async function convert(inputPath, outputPath, opts = {}) {
   // Ensure output directory exists
   fs.mkdirSync(path.dirname(absOutput), { recursive: true });
 
-  const markdown = fs.readFileSync(absInput, 'utf-8');
+  const rawMarkdown = fs.readFileSync(absInput, 'utf-8');
   const { highlightCss, printCss } = loadAssets();
+
+  // Smart analysis pass — normalize headings, detect issues
+  const { markdown, report } = await analyze(rawMarkdown, {
+    autoBreak,
+    fixHeadings: true,
+  });
+
+  if (report.headingFixes.length) {
+    console.log(`  ⚠ Fixed ${report.headingFixes.length} heading hierarchy skip(s)`);
+  }
+  if (report.asciiArtBlocks.length) {
+    console.log(`  ℹ Detected ${report.asciiArtBlocks.length} ASCII art block(s)`);
+  }
 
   // Parse Markdown → HTML
   let body = marked.parse(markdown);
