@@ -14,6 +14,7 @@
     "test:docx": "node src/cli.js --format docx samples/test.md output/test.docx"
   },
   "dependencies": {
+    "cors": "^2.8.6",
     "express": "^5.2.1",
     "highlight.js": "^11.10.0",
     "marked": "^13.0.0",

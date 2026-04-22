@@ -1141,6 +1141,58 @@ function initScrollAnimations() {
 }
 
 /* ══════════════════════════════════════════════════════════════
+   API DOCS — language tabs + copy buttons
+   ══════════════════════════════════════════════════════════════ */
+function initApiDocs() {
+  // ── Language tab switching ──
+  const langTabs = document.querySelectorAll('.api-lang-tab');
+
+  langTabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      const lang = tab.dataset.lang;
+      // Find the parent .api-examples container
+      const examples = tab.closest('.api-examples');
+      if (!examples) return;
+
+      examples.querySelectorAll('.api-lang-tab').forEach(t => {
+        t.classList.toggle('active', t.dataset.lang === lang);
+        t.setAttribute('aria-selected', t.dataset.lang === lang);
+      });
+      examples.querySelectorAll('.api-code-block').forEach(b => {
+        b.classList.toggle('active', b.dataset.lang === lang);
+      });
+    });
+  });
+
+  // ── Copy buttons ──
+  document.querySelectorAll('.api-code-copy').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const block = btn.closest('.api-code-block');
+      const code  = block ? block.querySelector('code') : null;
+      if (!code) return;
+
+      // Decode HTML entities before copying
+      const text = code.innerText || code.textContent;
+      navigator.clipboard.writeText(text).then(() => {
+        const orig = btn.textContent;
+        btn.textContent = 'Copied!';
+        btn.classList.add('copied');
+        setTimeout(() => {
+          btn.textContent = orig;
+          btn.classList.remove('copied');
+        }, 2000);
+      });
+    });
+  });
+
+  // ── Set base URL dynamically ──
+  const baseEl = document.getElementById('apiBaseUrl');
+  if (baseEl) {
+    baseEl.textContent = `${window.location.origin}/api/v1`;
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════
    BOOTSTRAP
    ══════════════════════════════════════════════════════════════ */
 document.addEventListener('DOMContentLoaded', () => {
@@ -1154,5 +1206,6 @@ document.addEventListener('DOMContentLoaded', () => {
   initUrlInput();
   initOptions();
   initConvertBtn();
+  initApiDocs();
   initScrollAnimations();
 });
