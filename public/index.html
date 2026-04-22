@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>InkDown — Markdown to PDF & DOCX</title>
+  <title>InkDown — Markdown to PDF & DOCX API</title>
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
-  <meta name="description" content="Convert Markdown to beautifully formatted PDFs and DOCX files — syntax highlighting, smart tables, images, and perfect page layout.">
+  <meta name="description" content="Convert Markdown to beautifully formatted PDFs — syntax highlighting, smart tables, images, and perfect page layout.">
   <script>
     // Apply saved theme before first paint to avoid flash
     (function() {
@@ -56,6 +56,10 @@
         <a href="#app" class="nav-link" data-section="app">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
           Try It
+        </a>
+        <a href="#api" class="nav-link" data-section="api">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+          API
         </a>
         <div class="nav-link-indicator" id="navIndicator"></div>
       </div>
@@ -125,6 +129,16 @@
           </div>
           <svg class="mobile-nav-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
         </a>
+        <a href="#api" class="mobile-nav-link" data-index="3">
+          <div class="mobile-nav-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+          </div>
+          <div class="mobile-nav-text">
+            <span class="mobile-nav-title">API</span>
+            <span class="mobile-nav-desc">Integrate from your own app</span>
+          </div>
+          <svg class="mobile-nav-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+        </a>
       </nav>
 
       <div class="mobile-panel-footer">
@@ -153,7 +167,7 @@
     <div class="container hero-content">
       <div class="hero-badge animate-in">
         <span class="badge-dot"></span>
-        <span>PDF &amp; DOCX export — live preview</span>
+        <span>PDF · DOCX · REST API</span>
       </div>
 
       <h1 class="hero-headline animate-in">
@@ -162,13 +176,13 @@
       </h1>
 
       <p class="hero-sub animate-in">
-        Drop your <code>.md</code> file, paste your text, or point to a URL.
-        Export a pixel-perfect <strong>PDF</strong> or an editable <strong>DOCX</strong> — with syntax highlighting, smart tables, TOC, and zero overflow.
+        Drop your <code>.md</code> file, paste your text, or call the <strong>REST API</strong> from any app.
+        Export pixel-perfect <strong>PDF</strong> or <strong>DOCX</strong> — syntax highlighting, smart tables, TOC, and zero overflow.
       </p>
 
       <div class="hero-actions animate-in">
         <a href="#app" class="btn-pill btn-cta">Start Converting</a>
-        <a href="#features" class="btn-ghost">See Features ↓</a>
+        <a href="#api" class="btn-ghost">API Docs ↓</a>
       </div>
 
       <!-- Stats strip -->
@@ -179,13 +193,13 @@
         </div>
         <div class="hero-stat-sep"></div>
         <div class="hero-stat">
-          <span class="hero-stat-num">2</span>
+          <span class="hero-stat-num">PDF&nbsp;+&nbsp;DOCX</span>
           <span class="hero-stat-label">Output formats</span>
         </div>
         <div class="hero-stat-sep"></div>
         <div class="hero-stat">
-          <span class="hero-stat-num">0</span>
-          <span class="hero-stat-label">Layout overflows</span>
+          <span class="hero-stat-num">REST</span>
+          <span class="hero-stat-label">API included</span>
         </div>
         <div class="hero-stat-sep"></div>
         <div class="hero-stat">
@@ -203,7 +217,7 @@
         <div class="key-sep">then</div>
         <div class="key-group">
           <kbd class="key">⌘</kbd><kbd class="key">↵</kbd>
-          <span class="key-label">Convert to PDF/DOCX</span>
+          <span class="key-label">Convert to PDF</span>
         </div>
       </div>
     </div>
@@ -439,6 +453,20 @@
               placeholder="Optional — defaults to filename"
             >
           </div>
+
+          <div class="options-format">
+            <span class="format-label">Output Format</span>
+            <div class="format-toggle" id="formatToggle">
+              <button class="format-btn active" data-format="pdf">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                PDF
+              </button>
+              <button class="format-btn" data-format="docx">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+                DOCX
+              </button>
+            </div>
+          </div>
         </div>
 
         <!-- Convert bar -->
@@ -448,19 +476,7 @@
             <span id="convertInfoText">PDF renders in ~5 seconds</span>
           </div>
 
-          <!-- Format selector — card style -->
-          <div class="format-cards" role="group" aria-label="Output format">
-            <button class="format-card active" data-format="pdf" aria-pressed="true">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-              <span class="format-card-label">PDF</span>
-              <span class="format-card-desc">Print-ready</span>
-            </button>
-            <button class="format-card" data-format="docx" aria-pressed="false">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="8" y1="9" x2="11" y2="9"/></svg>
-              <span class="format-card-label">DOCX</span>
-              <span class="format-card-desc">Editable</span>
-            </button>
-          </div>
+
 
           <button class="btn-convert" id="convertBtn">
             <span class="btn-convert-idle">
@@ -588,6 +604,304 @@
         </div>
 
       </div>
+    </div>
+  </section>
+
+  <!-- ── API Documentation ─────────────────────────────────── -->
+  <section class="section-api" id="api">
+    <div class="container">
+
+      <div class="section-label animate-in">REST API</div>
+      <h2 class="section-heading animate-in">Integrate InkDown anywhere</h2>
+      <p class="section-sub animate-in">Call the conversion API from any language. Build pipelines, automate doc generation, or embed into your own platform.</p>
+
+      <!-- Base URL & Auth -->
+      <div class="api-overview animate-in">
+        <div class="api-overview-row">
+          <span class="api-meta-label">Base URL</span>
+          <code class="api-base-code" id="apiBaseUrl">http://localhost:3000/api/v1</code>
+        </div>
+        <div class="api-overview-row">
+          <span class="api-meta-label">Auth</span>
+          <span class="api-auth-note">
+            Optional. Set <code>INKDOWN_API_KEYS</code> env var to require an API key.
+            Pass it as <code>X-API-Key: &lt;key&gt;</code> or <code>Authorization: Bearer &lt;key&gt;</code>.
+          </span>
+        </div>
+        <div class="api-overview-row">
+          <span class="api-meta-label">Formats</span>
+          <span class="api-format-pills">
+            <span class="api-format-pill">application/json</span>
+            <span class="api-format-pill">multipart/form-data</span>
+          </span>
+        </div>
+      </div>
+
+      <!-- Endpoints -->
+      <div class="api-section-title animate-in">Endpoints</div>
+      <div class="api-endpoints animate-in">
+        <div class="api-endpoint">
+          <span class="endpoint-badge method-get">GET</span>
+          <code class="endpoint-path">/api/v1/health</code>
+          <span class="endpoint-desc">Server health check — returns status and version</span>
+          <a href="#api-health" class="endpoint-anchor">↓</a>
+        </div>
+        <div class="api-endpoint">
+          <span class="endpoint-badge method-get">GET</span>
+          <code class="endpoint-path">/api/v1/info</code>
+          <span class="endpoint-desc">API metadata — formats, auth mode, all endpoints</span>
+          <a href="#api-info" class="endpoint-anchor">↓</a>
+        </div>
+        <div class="api-endpoint">
+          <span class="endpoint-badge method-post">POST</span>
+          <code class="endpoint-path">/api/v1/convert</code>
+          <span class="endpoint-desc">Convert Markdown to PDF or DOCX</span>
+          <a href="#api-convert" class="endpoint-anchor">↓</a>
+        </div>
+      </div>
+
+      <!-- POST /api/v1/convert -->
+      <div class="api-section-title animate-in" id="api-convert">POST /api/v1/convert</div>
+
+      <!-- Parameters table -->
+      <div class="api-params animate-in">
+        <table class="api-param-table">
+          <thead>
+            <tr>
+              <th>Parameter</th>
+              <th>Type</th>
+              <th>Required</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code class="param-name">markdown</code></td>
+              <td><span class="param-type">string</span></td>
+              <td><span class="param-required">required*</span></td>
+              <td>Raw Markdown content to convert</td>
+            </tr>
+            <tr>
+              <td><code class="param-name">url</code></td>
+              <td><span class="param-type">string</span></td>
+              <td><span class="param-required">required*</span></td>
+              <td>Public URL of a raw <code>.md</code> file to fetch and convert</td>
+            </tr>
+            <tr>
+              <td><code class="param-name">file</code></td>
+              <td><span class="param-type">file</span></td>
+              <td><span class="param-required">required*</span></td>
+              <td>Multipart file upload of a <code>.md</code> file</td>
+            </tr>
+            <tr>
+              <td><code class="param-name">format</code></td>
+              <td><span class="param-type">string</span></td>
+              <td><span class="param-optional">optional</span></td>
+              <td><code>"pdf"</code> (default) or <code>"docx"</code></td>
+            </tr>
+            <tr>
+              <td><code class="param-name">title</code></td>
+              <td><span class="param-type">string</span></td>
+              <td><span class="param-optional">optional</span></td>
+              <td>Document title shown in the PDF footer. Defaults to filename.</td>
+            </tr>
+            <tr>
+              <td><code class="param-name">toc</code></td>
+              <td><span class="param-type">boolean</span></td>
+              <td><span class="param-optional">optional</span></td>
+              <td>Generate a Table of Contents from headings. Default: <code>false</code></td>
+            </tr>
+            <tr>
+              <td><code class="param-name">autoBreak</code></td>
+              <td><span class="param-type">boolean</span></td>
+              <td><span class="param-optional">optional</span></td>
+              <td>Insert a page break before every H1 heading. Default: <code>false</code></td>
+            </tr>
+          </tbody>
+        </table>
+        <p class="param-footnote">* Exactly one of <code>markdown</code>, <code>url</code>, or a multipart <code>file</code> is required.</p>
+      </div>
+
+      <!-- Code examples -->
+      <div class="api-section-title animate-in">Code Examples</div>
+      <div class="api-examples animate-in">
+        <div class="api-lang-tabs" role="tablist">
+          <button class="api-lang-tab active" data-lang="curl" role="tab">cURL</button>
+          <button class="api-lang-tab" data-lang="js" role="tab">JavaScript</button>
+          <button class="api-lang-tab" data-lang="python" role="tab">Python</button>
+          <button class="api-lang-tab" data-lang="php" role="tab">PHP</button>
+          <button class="api-lang-tab" data-lang="node" role="tab">Node.js</button>
+        </div>
+
+        <!-- cURL -->
+        <div class="api-code-block active" data-lang="curl">
+          <button class="api-code-copy" data-copy="curl">Copy</button>
+          <pre><code id="snippet-curl">curl -X POST http://localhost:3000/api/v1/convert \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: your_api_key" \
+  -d '{
+    "markdown": "# Hello World\n\nThis is my document.",
+    "format": "pdf",
+    "title": "My Document",
+    "toc": true
+  }' \
+  --output document.pdf</code></pre>
+        </div>
+
+        <!-- JavaScript (fetch) -->
+        <div class="api-code-block" data-lang="js">
+          <button class="api-code-copy" data-copy="js">Copy</button>
+          <pre><code id="snippet-js">const response = await fetch('http://localhost:3000/api/v1/convert', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'X-API-Key': 'your_api_key',
+  },
+  body: JSON.stringify({
+    markdown: '# Hello World\n\nThis is my document.',
+    format: 'pdf',
+    title: 'My Document',
+    toc: true,
+  }),
+});
+
+if (!response.ok) {
+  const err = await response.json();
+  throw new Error(err.error);
+}
+
+// Save as file (browser)
+const blob = await response.blob();
+const url = URL.createObjectURL(blob);
+const a = document.createElement('a');
+a.href = url;
+a.download = 'document.pdf';
+a.click();</code></pre>
+        </div>
+
+        <!-- Python -->
+        <div class="api-code-block" data-lang="python">
+          <button class="api-code-copy" data-copy="python">Copy</button>
+          <pre><code id="snippet-python">import requests
+
+response = requests.post(
+    'http://localhost:3000/api/v1/convert',
+    headers={'X-API-Key': 'your_api_key'},
+    json={
+        'markdown': '# Hello World\n\nThis is my document.',
+        'format': 'pdf',
+        'title': 'My Document',
+        'toc': True,
+    },
+)
+response.raise_for_status()
+
+with open('document.pdf', 'wb') as f:
+    f.write(response.content)
+
+print('Saved document.pdf')</code></pre>
+        </div>
+
+        <!-- PHP -->
+        <div class="api-code-block" data-lang="php">
+          <button class="api-code-copy" data-copy="php">Copy</button>
+          <pre><code id="snippet-php">&lt;?php
+$ch = curl_init('http://localhost:3000/api/v1/convert');
+curl_setopt_array($ch, [
+    CURLOPT_POST           => true,
+    CURLOPT_RETURNTRANSFER => true,
+    CURLOPT_HTTPHEADER     => [
+        'Content-Type: application/json',
+        'X-API-Key: your_api_key',
+    ],
+    CURLOPT_POSTFIELDS => json_encode([
+        'markdown'  => "# Hello World\n\nThis is my document.",
+        'format'    => 'pdf',
+        'title'     => 'My Document',
+        'toc'       => true,
+    ]),
+]);
+
+$pdf = curl_exec($ch);
+$status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+curl_close($ch);
+
+if ($status === 200) {
+    file_put_contents('document.pdf', $pdf);
+    echo "Saved document.pdf\n";
+}</code></pre>
+        </div>
+
+        <!-- Node.js (file upload) -->
+        <div class="api-code-block" data-lang="node">
+          <button class="api-code-copy" data-copy="node">Copy</button>
+          <pre><code id="snippet-node">import fs from 'fs';
+import FormData from 'form-data';
+import fetch from 'node-fetch';
+
+// Option A — send markdown as JSON
+const res = await fetch('http://localhost:3000/api/v1/convert', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'X-API-Key': 'your_api_key',
+  },
+  body: JSON.stringify({
+    markdown: fs.readFileSync('README.md', 'utf-8'),
+    format: 'pdf',
+    title: 'README',
+  }),
+});
+
+// Option B — send as file upload
+const form = new FormData();
+form.append('file', fs.createReadStream('README.md'));
+form.append('format', 'pdf');
+const res2 = await fetch('http://localhost:3000/api/v1/convert', {
+  method: 'POST',
+  headers: { 'X-API-Key': 'your_api_key', ...form.getHeaders() },
+  body: form,
+});
+
+fs.writeFileSync('output.pdf', Buffer.from(await res.arrayBuffer()));</code></pre>
+        </div>
+      </div>
+
+      <!-- Response info -->
+      <div class="api-section-title animate-in" id="api-health">Responses</div>
+      <div class="api-responses animate-in">
+        <div class="api-response-row">
+          <span class="response-status status-ok">200 OK</span>
+          <span class="response-desc">Binary file stream with <code>Content-Disposition: attachment; filename="..."</code></span>
+        </div>
+        <div class="api-response-row">
+          <span class="response-status status-bad">400</span>
+          <span class="response-desc"><code>{ "error": "...", "code": "BAD_REQUEST" }</code> — missing input or invalid URL</span>
+        </div>
+        <div class="api-response-row">
+          <span class="response-status status-unauth">401</span>
+          <span class="response-desc"><code>{ "error": "...", "code": "UNAUTHORIZED" }</code> — invalid or missing API key</span>
+        </div>
+        <div class="api-response-row">
+          <span class="response-status status-err">500</span>
+          <span class="response-desc"><code>{ "error": "...", "code": "CONVERSION_ERROR" }</code> — conversion failed</span>
+        </div>
+      </div>
+
+      <!-- GET /health example -->
+      <div class="api-section-title animate-in" id="api-info">GET /api/v1/health — Example Response</div>
+      <div class="api-examples animate-in">
+        <div class="api-code-block active" data-lang="json-health">
+          <button class="api-code-copy" data-copy="json-health">Copy</button>
+          <pre><code id="snippet-json-health">{
+  "status": "ok",
+  "version": "1.0.0",
+  "timestamp": "2026-04-22T10:00:00.000Z",
+  "formats": ["pdf", "docx"]
+}</code></pre>
+        </div>
+      </div>
+
     </div>
   </section>
 

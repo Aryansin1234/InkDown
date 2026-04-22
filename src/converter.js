@@ -13,6 +13,7 @@ const path     = require('path');
 const puppeteer = require('puppeteer');
 const { marked } = require('marked');
 const hljs     = require('highlight.js');
+const { analyze } = require('./analyzer');
 
 // ── Slugify helper ────────────────────────────────────────────
 function slugify(text) {
@@ -167,13 +168,24 @@ function loadAssets() {
 /**
  * Replace src="relative/path" with base64 data URIs so Puppeteer
  * (which runs in a sandboxed context) can render local images.
+ * Only images with paths that resolve *inside* baseDir are inlined;
+ * absolute paths and traversals (../../) are silently skipped.
  */
 function inlineImages(html, baseDir) {
+  const safeBase = path.resolve(baseDir) + path.sep;
+
   return html.replace(/src="([^"]+)"/g, (match, src) => {
     // Skip already-inlined, http, https, data URIs
     if (/^(https?:\/\/|data:)/.test(src)) return match;
 
-    const imgPath = path.isAbsolute(src) ? src : path.join(baseDir, src);
+    // Reject absolute paths — they may point anywhere on the filesystem
+    if (path.isAbsolute(src)) return match;
+
+    const imgPath = path.resolve(baseDir, src);
+
+    // Reject traversals that escape the document directory
+    if (!imgPath.startsWith(safeBase)) return match;
+
     if (!fs.existsSync(imgPath)) return match;
 
     try {
@@ -211,8 +223,21 @@ async function convert(inputPath, outputPath, opts = {}) {
   // Ensure output directory exists
   fs.mkdirSync(path.dirname(absOutput), { recursive: true });
 
-  const markdown = fs.readFileSync(absInput, 'utf-8');
+  const rawMarkdown = fs.readFileSync(absInput, 'utf-8');
   const { highlightCss, printCss } = loadAssets();
+
+  // Smart analysis pass — normalize headings, detect issues
+  const { markdown, report } = await analyze(rawMarkdown, {
+    autoBreak,
+    fixHeadings: true,
+  });
+
+  if (report.headingFixes.length) {
+    console.log(`  ⚠ Fixed ${report.headingFixes.length} heading hierarchy skip(s)`);
+  }
+  if (report.asciiArtBlocks.length) {
+    console.log(`  ℹ Detected ${report.asciiArtBlocks.length} ASCII art block(s)`);
+  }
 
   // Parse Markdown → HTML
   let body = marked.parse(markdown);

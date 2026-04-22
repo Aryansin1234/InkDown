@@ -7,7 +7,7 @@
 // ── State ─────────────────────────────────────────────────────
 const state = {
   mode:          'editor',   // 'editor' | 'upload' | 'url'
-  format:        'pdf',      // 'pdf' | 'docx'
+  format:        'pdf',
   markdownText:  '',
   uploadedFile:  null,
   urlValue:      '',
@@ -119,11 +119,11 @@ function resolveElements() {
     autoBreakToggle:  document.getElementById('autoBreakToggle'),
     titleInput:       document.getElementById('titleInput'),
 
-    // Format selector
-    formatCards:     document.querySelectorAll('.format-card'),
+
     convertInfoText: document.getElementById('convertInfoText'),
     convertBtnLabel: document.getElementById('convertBtnLabel'),
     loadingStepText: document.getElementById('loadingStepText'),
+    formatToggle:  document.getElementById('formatToggle'),
 
     // Convert
     convertBtn:    document.getElementById('convertBtn'),
@@ -147,32 +147,7 @@ function initTheme() {
   });
 }
 
-/* ══════════════════════════════════════════════════════════════
-   FORMAT SELECTOR
-   ══════════════════════════════════════════════════════════════ */
-function initFormatSelector() {
-  el.formatCards.forEach(btn => {
-    btn.addEventListener('click', () => {
-      const fmt = btn.dataset.format;
-      state.format = fmt;
 
-      // Update active state
-      el.formatCards.forEach(b => {
-        b.classList.toggle('active', b.dataset.format === fmt);
-        b.setAttribute('aria-pressed', b.dataset.format === fmt);
-      });
-
-      // Update hint text and button label
-      if (fmt === 'pdf') {
-        el.convertInfoText.textContent = 'PDF renders in ~5 seconds';
-        el.convertBtnLabel.textContent = 'Generate PDF';
-      } else {
-        el.convertInfoText.textContent = 'DOCX converts in ~1 second';
-        el.convertBtnLabel.textContent = 'Generate DOCX';
-      }
-    });
-  });
-}
 
 /* ══════════════════════════════════════════════════════════════
    NAVIGATION
@@ -836,6 +811,28 @@ function initOptions() {
   el.titleInput.addEventListener('input', () => {
     state.options.title = el.titleInput.value.trim();
   });
+
+  // Format toggle (PDF / DOCX)
+  if (el.formatToggle) {
+    el.formatToggle.addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-format]');
+      if (!btn) return;
+      const fmt = btn.dataset.format;
+      state.format = fmt;
+      el.formatToggle.querySelectorAll('.format-btn').forEach(b => {
+        b.classList.toggle('active', b.dataset.format === fmt);
+      });
+      // Update button label & info text
+      if (el.convertBtnLabel) {
+        el.convertBtnLabel.textContent = fmt === 'docx' ? 'Generate DOCX' : 'Generate PDF';
+      }
+      if (el.convertInfoText) {
+        el.convertInfoText.textContent = fmt === 'docx'
+          ? 'DOCX renders in ~2 seconds'
+          : 'PDF renders in ~5 seconds';
+      }
+    });
+  }
 }
 
 /* ══════════════════════════════════════════════════════════════
@@ -883,7 +880,7 @@ async function handleConvert() {
   // Options
   fd.append('toc',       state.options.toc.toString());
   fd.append('autoBreak', state.options.autoBreak.toString());
-  fd.append('format',    state.format);
+  fd.append('format',    state.format || 'pdf');
   if (state.options.title) fd.append('title', state.options.title);
 
   try {
@@ -1144,12 +1141,63 @@ function initScrollAnimations() {
 }
 
 /* ══════════════════════════════════════════════════════════════
+   API DOCS — language tabs + copy buttons
+   ══════════════════════════════════════════════════════════════ */
+function initApiDocs() {
+  // ── Language tab switching ──
+  const langTabs = document.querySelectorAll('.api-lang-tab');
+
+  langTabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      const lang = tab.dataset.lang;
+      // Find the parent .api-examples container
+      const examples = tab.closest('.api-examples');
+      if (!examples) return;
+
+      examples.querySelectorAll('.api-lang-tab').forEach(t => {
+        t.classList.toggle('active', t.dataset.lang === lang);
+        t.setAttribute('aria-selected', t.dataset.lang === lang);
+      });
+      examples.querySelectorAll('.api-code-block').forEach(b => {
+        b.classList.toggle('active', b.dataset.lang === lang);
+      });
+    });
+  });
+
+  // ── Copy buttons ──
+  document.querySelectorAll('.api-code-copy').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const block = btn.closest('.api-code-block');
+      const code  = block ? block.querySelector('code') : null;
+      if (!code) return;
+
+      // Decode HTML entities before copying
+      const text = code.innerText || code.textContent;
+      navigator.clipboard.writeText(text).then(() => {
+        const orig = btn.textContent;
+        btn.textContent = 'Copied!';
+        btn.classList.add('copied');
+        setTimeout(() => {
+          btn.textContent = orig;
+          btn.classList.remove('copied');
+        }, 2000);
+      });
+    });
+  });
+
+  // ── Set base URL dynamically ──
+  const baseEl = document.getElementById('apiBaseUrl');
+  if (baseEl) {
+    baseEl.textContent = `${window.location.origin}/api/v1`;
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════
    BOOTSTRAP
    ══════════════════════════════════════════════════════════════ */
 document.addEventListener('DOMContentLoaded', () => {
   resolveElements();
   initTheme();
-  initFormatSelector();
   initNav();
   initTabs();
   initEditor();
@@ -1158,5 +1206,6 @@ document.addEventListener('DOMContentLoaded', () => {
   initUrlInput();
   initOptions();
   initConvertBtn();
+  initApiDocs();
   initScrollAnimations();
 });

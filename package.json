@@ -1,25 +1,30 @@
 {
   "name": "inkdown",
   "version": "1.0.0",
-  "description": "Turn Markdown into pixel-perfect PDF & DOCX documents — syntax highlighting, smart tables, page control, and more.",
+  "description": "Turn Markdown into pixel-perfect PDF and DOCX documents — syntax highlighting, smart tables, page control, and more.",
   "main": "src/converter.js",
   "bin": {
     "md2pdf": "./src/cli.js"
   },
   "scripts": {
+    "dev": "node server.js",
+    "start": "node server.js",
     "convert": "node src/cli.js",
-    "test": "node src/cli.js samples/test.md output/test.pdf"
+    "test": "node src/cli.js samples/test.md output/test.pdf",
+    "test:docx": "node src/cli.js --format docx samples/test.md output/test.docx"
   },
   "dependencies": {
-    "docx": "^9.6.1",
+    "cors": "^2.8.6",
     "express": "^5.2.1",
     "highlight.js": "^11.10.0",
-    "html-to-docx": "^1.8.0",
     "marked": "^13.0.0",
     "multer": "^2.1.1",
     "node-fetch": "^3.3.2",
-    "node-html-parser": "^7.1.0",
-    "puppeteer": "^24.40.0"
+    "puppeteer": "^24.40.0",
+    "remark-gfm": "^4.0.1",
+    "remark-parse": "^11.0.0",
+    "remark-stringify": "^11.0.0",
+    "unified": "^11.0.5"
   },
   "engines": {
     "node": ">=18.0.0"
