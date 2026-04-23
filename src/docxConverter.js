@@ -116,7 +116,7 @@ async function convertToDocx(markdown, opts = {}) {
     const pandoc = getPandoc();
     const args = [
       inputPath,
-      '-f', 'markdown+smart+pipe_tables+strikeout+task_lists+fenced_code_blocks+backtick_code_blocks+autolink_bare_uris',
+      '-f', 'markdown+smart+pipe_tables+grid_tables+multiline_tables+simple_tables+strikeout+task_lists+fenced_code_blocks+backtick_code_blocks+autolink_bare_uris',
       '-t', 'docx',
       '-o', outputPath,
       '--wrap=none',
