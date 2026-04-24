@@ -11,8 +11,8 @@
 
 services:
   inkdown:
-    image: ghcr.io/aryansin1234/inkdown:latest   # pre-built image from GitHub Container Registry
-    # build: .                                   # uncomment to build locally instead
+    build: .                                     # build from local Dockerfile
+    # image: ghcr.io/aryansin1234/inkdown:latest # uncomment once pushed to GHCR
     container_name: inkdown
     restart: unless-stopped
     ports:
