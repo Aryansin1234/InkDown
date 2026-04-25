@@ -96,10 +96,11 @@ const REFERENCE_DOCX = path.join(__dirname, '..', 'reference.docx');
 async function convertToDocx(markdown, opts = {}) {
   const { title = 'Document', toc = false, autoBreak = false } = opts;
 
-  // 1. Run smart analyzer
+  // 1. Run smart analyzer (skip grid table → HTML conversion; Pandoc handles them natively)
   const { markdown: cleanMd, report } = await analyze(markdown, {
     autoBreak,
     fixHeadings: true,
+    skipGridTableConversion: true,
   });
 
   // 2. Convert pagebreak comments to Pandoc \newpage

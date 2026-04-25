@@ -3,8 +3,9 @@
 # Builds a self-contained image with Node 20 + Chromium for Puppeteer PDF
 # rendering.  No external Chrome download needed at runtime.
 #
-# Build:  docker build -t inkdown .
-# Run:    docker run -p 3000:3000 inkdown
+# Build:  docker build -t aryansin1234/inkdown .
+# Run:    docker run -p 3000:3000 aryansin1234/inkdown
+# Push:   docker push aryansin1234/inkdown:latest
 # ─────────────────────────────────────────────────────────────────────────────
 
 FROM node:20-slim
@@ -13,9 +14,10 @@ LABEL org.opencontainers.image.title="InkDown" \
       org.opencontainers.image.description="Markdown → PDF & DOCX converter with REST API" \
       org.opencontainers.image.source="https://github.com/Aryansin1234/InkDown"
 
-# ── System dependencies for Chromium (used by Puppeteer) ──────────────────
+# ── System dependencies for Chromium (used by Puppeteer) + Pandoc (DOCX) ──
 RUN apt-get update && apt-get install -y --no-install-recommends \
       chromium \
+      pandoc \
       fonts-liberation \
       fonts-noto-color-emoji \
       libasound2 \
@@ -72,9 +74,10 @@ COPY package*.json ./
 RUN npm ci --omit=dev
 
 # ── Copy application source ────────────────────────────────────────────────
-COPY public/  ./public/
-COPY src/     ./src/
-COPY server.js ./
+COPY public/     ./public/
+COPY src/        ./src/
+COPY server.js   ./
+COPY reference.docx ./
 
 # ── Hand ownership to the non-root user ───────────────────────────────────
 RUN chown -R inkdown:inkdown /app

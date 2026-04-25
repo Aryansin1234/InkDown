@@ -75,6 +75,120 @@ Then open **[http://localhost:3000](http://localhost:3000)** — that's it.
 
 ---
 
+## 🐳 Docker
+
+InkDown is published to **Docker Hub** as [`aryansin1234/inkdown`](https://hub.docker.com/r/aryansin1234/inkdown).  
+The image bundles Node 20, Chromium, and Pandoc — no local installs needed.
+
+### Available Tags
+
+| Tag | Description |
+|-----|-------------|
+| `latest` | Most recent stable build |
+| `v1.0.0` | First stable release |
+
+### Option 1 — One-liner (fastest)
+
+```bash
+docker run -p 3000:3000 aryansin1234/inkdown:latest
+```
+
+Open **[http://localhost:3000](http://localhost:3000)** and you're done.
+
+### Option 2 — Docker Compose (recommended for servers)
+
+```bash
+# Download the compose file
+curl -O https://raw.githubusercontent.com/Aryansin1234/InkDown/docker-version/docker-compose.yml
+
+# Start (foreground)
+docker compose up
+
+# Or detached / background
+docker compose up -d
+
+# Stop
+docker compose down
+```
+
+### Option 3 — With API Key (production)
+
+```bash
+docker run -p 3000:3000 \
+  -e INKDOWN_API_KEYS=your-secret-key \
+  aryansin1234/inkdown:latest
+```
+
+Pass the key in requests:
+```
+X-API-Key: your-secret-key
+# or
+Authorization: Bearer your-secret-key
+```
+
+### Option 4 — Custom Port
+
+```bash
+docker run -p 8080:8080 -e PORT=8080 aryansin1234/inkdown:latest
+```
+
+### Environment Variables
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `PORT` | `3000` | Port the server listens on |
+| `INKDOWN_API_KEYS` | *(none — open)* | Comma-separated API keys. When set, `/api/v1/convert` requires a valid key. |
+| `INKDOWN_CORS_ORIGINS` | `*` | Allowed CORS origins. Restrict in production: `https://myapp.com` |
+| `PUPPETEER_EXECUTABLE_PATH` | `/usr/bin/chromium` | Pre-set in image — no need to change |
+
+### What's Inside the Image
+
+| Component | Purpose |
+|-----------|---------|
+| `node:20-slim` | JavaScript runtime |
+| Chromium (system) | Headless PDF rendering via Puppeteer |
+| Pandoc | Native DOCX generation |
+| Puppeteer `^24` | Chrome automation (no bundled Chrome) |
+| marked + highlight.js | Markdown → HTML with syntax highlighting |
+| Express `^5` | HTTP server |
+| Non-root user `inkdown` | Security best-practice |
+
+> **Image size:** ~400 MB &nbsp;·&nbsp; **Exposed port:** `3000` &nbsp;·&nbsp; **Base:** `node:20-slim` (Debian)
+
+### Build & Push from Source
+
+```bash
+# Clone
+git clone https://github.com/Aryansin1234/InkDown.git
+cd InkDown
+
+# Build
+docker build -t aryansin1234/inkdown:latest .
+
+# Run locally to test
+docker run -p 3000:3000 aryansin1234/inkdown:latest
+
+# Push to Docker Hub
+docker push aryansin1234/inkdown:latest
+docker tag aryansin1234/inkdown:latest aryansin1234/inkdown:v1.0.0
+docker push aryansin1234/inkdown:v1.0.0
+```
+
+### Health Check
+
+```bash
+curl http://localhost:3000/api/v1/health
+# → {"status":"ok","version":"1.0.0","formats":["pdf","docx"]}
+```
+
+Or inspect container health directly:
+
+```bash
+docker inspect --format='{{.State.Health.Status}}' inkdown
+# → healthy
+```
+
+---
 ## 🖥️ Web App
 
 ### Three ways to feed it Markdown

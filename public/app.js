@@ -1227,7 +1227,7 @@ function initDockerSection() {
   // ── Terminal bar "Copy" button ──
   const termCopy = document.getElementById('dockerTerminalCopy');
   if (termCopy) {
-    const cmd = 'docker run -p 3000:3000 ghcr.io/aryansin1234/inkdown:latest';
+    const cmd = 'docker run -p 3000:3000 aryansin1234/inkdown:latest';
     termCopy.addEventListener('click', () => {
       navigator.clipboard.writeText(cmd).then(() => {
         const orig = termCopy.textContent;
