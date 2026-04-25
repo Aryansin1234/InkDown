@@ -61,6 +61,10 @@
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
           API
         </a>
+        <a href="#docker" class="nav-link" data-section="docker">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="4" height="4" rx="1"/><rect x="8" y="11" width="4" height="4" rx="1"/><rect x="13" y="11" width="4" height="4" rx="1"/><rect x="8" y="6" width="4" height="4" rx="1"/><path d="M21 12.5c0 0-.5-2-3-2H3"/><path d="M18 15.5s1 .5 2-.5"/></svg>
+          Docker
+        </a>
         <div class="nav-link-indicator" id="navIndicator"></div>
       </div>
 
@@ -139,6 +143,16 @@
           </div>
           <svg class="mobile-nav-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
         </a>
+        <a href="#docker" class="mobile-nav-link" data-index="4">
+          <div class="mobile-nav-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="4" height="4" rx="1"/><rect x="8" y="11" width="4" height="4" rx="1"/><rect x="13" y="11" width="4" height="4" rx="1"/><rect x="8" y="6" width="4" height="4" rx="1"/><path d="M21 12.5c0 0-.5-2-3-2H3"/><path d="M18 15.5s1 .5 2-.5"/></svg>
+          </div>
+          <div class="mobile-nav-text">
+            <span class="mobile-nav-title">Docker</span>
+            <span class="mobile-nav-desc">Run InkDown as a container</span>
+          </div>
+          <svg class="mobile-nav-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+        </a>
       </nav>
 
       <div class="mobile-panel-footer">
@@ -167,7 +181,7 @@
     <div class="container hero-content">
       <div class="hero-badge animate-in">
         <span class="badge-dot"></span>
-        <span>PDF · DOCX · REST API</span>
+        <span>PDF · DOCX · REST API · Docker</span>
       </div>
 
       <h1 class="hero-headline animate-in">
@@ -205,6 +219,11 @@
         <div class="hero-stat">
           <span class="hero-stat-num">Local</span>
           <span class="hero-stat-label">Your data stays here</span>
+        </div>
+        <div class="hero-stat-sep"></div>
+        <div class="hero-stat">
+          <span class="hero-stat-num">Docker</span>
+          <span class="hero-stat-label">One-line deploy</span>
         </div>
       </div>
 
@@ -905,6 +924,270 @@ fs.writeFileSync('output.pdf', Buffer.from(await res.arrayBuffer()));</code></pr
     </div>
   </section>
 
+  <!-- ── Docker ──────────────────────────────────────────────── -->
+  <section class="section-docker" id="docker">
+    <div class="container">
+
+      <div class="section-label animate-in">DOCKER</div>
+      <h2 class="section-heading animate-in">Run InkDown as a container</h2>
+      <p class="section-sub animate-in">Pre-built image on Docker Hub. No Node.js, no Chrome, no Pandoc install — everything is bundled. Works on Linux, macOS, and Windows.</p>
+
+      <!-- ── Terminal hero ──────────────────────────────────── -->
+      <div class="docker-terminal animate-in">
+        <div class="docker-terminal-bar">
+          <div class="macos-dots">
+            <span class="dot dot-red"></span>
+            <span class="dot dot-yellow"></span>
+            <span class="dot dot-green"></span>
+          </div>
+          <span class="docker-terminal-title">Terminal</span>
+          <button class="docker-terminal-copy" id="dockerTerminalCopy" aria-label="Copy command">Copy</button>
+        </div>
+        <div class="docker-terminal-body">
+          <div class="docker-terminal-line">
+            <span class="dt-prompt">$</span>
+            <span class="dt-cmd" id="dockerTerminalCmd">docker run <span class="dt-flag">-p</span> <span class="dt-val">3000:3000</span> <span class="dt-img">aryansin1234/inkdown:latest</span></span>
+          </div>
+          <div class="docker-terminal-line docker-terminal-out">
+            <span class="dt-prompt dt-prompt-out">→</span>
+            <span class="dt-out">InkDown</span>
+          </div>
+          <div class="docker-terminal-line docker-terminal-out">
+            <span class="dt-prompt dt-prompt-out">→</span>
+            <span class="dt-out-dim">─────────────────────────────────────────────</span>
+          </div>
+          <div class="docker-terminal-line docker-terminal-out">
+            <span class="dt-prompt dt-prompt-out">→</span>
+            <span class="dt-out-dim">  Web App  : <span class="dt-link">http://localhost:3000</span></span>
+          </div>
+          <div class="docker-terminal-line docker-terminal-out">
+            <span class="dt-prompt dt-prompt-out">→</span>
+            <span class="dt-out-dim">  API v1   : <span class="dt-link">http://localhost:3000/api/v1</span></span>
+          </div>
+          <div class="docker-terminal-line docker-terminal-out">
+            <span class="dt-prompt dt-prompt-out">→</span>
+            <span class="dt-out-dim">  Auth     : open — set INKDOWN_API_KEYS to restrict</span>
+          </div>
+          <div class="docker-terminal-cursor" aria-hidden="true"></div>
+        </div>
+      </div>
+
+      <!-- ── Platform pills ──────────────────────────────────── -->
+      <div class="docker-platforms animate-in">
+        <span class="docker-platform-label">Runs on</span>
+        <span class="docker-platform-pill">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M0 3.449L9.75 2.1v9.451H0m10.949-9.602L24 0v11.4H10.949M0 12.6h9.75v9.451L0 20.699M10.949 12.6H24V24l-12.9-1.801"/></svg>
+          Linux
+        </span>
+        <span class="docker-platform-pill">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm0 2a9.988 9.988 0 0 1 7.072 2.929A9.99 9.99 0 0 1 22 12a9.99 9.99 0 0 1-2.929 7.072A9.988 9.988 0 0 1 12 22a9.988 9.988 0 0 1-7.072-2.929A9.988 9.988 0 0 1 2 12a9.99 9.99 0 0 1 2.929-7.071A9.988 9.988 0 0 1 12 2z"/></svg>
+          macOS
+        </span>
+        <span class="docker-platform-pill">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M0 0h11.5v11.5H0zm12.5 0H24v11.5H12.5zM0 12.5h11.5V24H0zm12.5 0H24V24H12.5z"/></svg>
+          Windows
+        </span>
+        <span class="docker-platform-sep">·</span>
+        <span class="docker-platform-label">Image</span>
+        <a href="https://hub.docker.com/r/aryansin1234/inkdown" target="_blank" rel="noopener" class="docker-platform-pill docker-platform-pill-link">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M13.983 11.078h2.119a.186.186 0 0 0 .186-.185V9.006a.186.186 0 0 0-.186-.186h-2.119a.185.185 0 0 0-.185.185v1.888c0 .102.083.185.185.185m-2.954-5.43h2.118a.186.186 0 0 0 .186-.186V3.574a.186.186 0 0 0-.186-.185h-2.118a.185.185 0 0 0-.185.185v1.888c0 .102.082.185.185.185m0 2.716h2.118a.187.187 0 0 0 .186-.186V6.29a.186.186 0 0 0-.186-.185h-2.118a.185.185 0 0 0-.185.185v1.887c0 .102.082.185.185.186m-2.93 0h2.12a.186.186 0 0 0 .184-.186V6.29a.185.185 0 0 0-.185-.185H8.1a.185.185 0 0 0-.185.185v1.887c0 .102.083.185.185.186m-2.964 0h2.119a.186.186 0 0 0 .185-.186V6.29a.185.185 0 0 0-.185-.185H5.136a.186.186 0 0 0-.186.185v1.887c0 .102.084.185.186.186m5.893 2.715h2.118a.186.186 0 0 0 .186-.185V9.006a.186.186 0 0 0-.186-.186h-2.118a.185.185 0 0 0-.185.185v1.888c0 .102.082.185.185.185m-2.93 0h2.12a.185.185 0 0 0 .184-.185V9.006a.185.185 0 0 0-.184-.186h-2.12a.185.185 0 0 0-.184.185v1.888c0 .102.083.185.185.185m-2.964 0h2.119a.185.185 0 0 0 .185-.185V9.006a.185.185 0 0 0-.184-.186h-2.12a.186.186 0 0 0-.186.186v1.887c0 .102.084.185.186.185m-2.92 0h2.12a.186.186 0 0 0 .184-.185V9.006a.185.185 0 0 0-.184-.186h-2.12a.185.185 0 0 0-.185.185v1.888c0 .102.083.185.185.185M23.763 9.89c-.065-.051-.672-.51-1.954-.51-.338.001-.676.03-1.01.087-.248-1.7-1.653-2.53-1.716-2.566l-.344-.199-.226.327c-.284.438-.49.922-.612 1.43-.23.97-.09 1.882.403 2.661-.595.332-1.55.413-1.744.42H.751a.751.751 0 0 0-.75.748 11.376 11.376 0 0 0 .692 4.062c.545 1.428 1.355 2.48 2.41 3.124 1.18.723 3.1 1.137 5.275 1.137.983.003 1.963-.086 2.93-.266a12.248 12.248 0 0 0 3.823-1.389c.98-.567 1.86-1.288 2.61-2.136 1.252-1.418 1.998-2.997 2.553-4.4h.221c1.372 0 2.215-.549 2.68-1.009.309-.293.55-.65.707-1.046l.098-.288Z"/></svg>
+          Docker Hub
+        </a>
+      </div>
+
+      <!-- ── Deployment method cards ──────────────────────── -->
+      <div class="docker-method-grid animate-in">
+
+        <!-- Card 1: One-liner -->
+        <div class="docker-method-card">
+          <div class="docker-method-header">
+            <div class="docker-method-step">01</div>
+            <div class="docker-method-meta">
+              <span class="docker-method-title">Pull &amp; Run</span>
+              <span class="docker-method-desc">Fastest way to get started</span>
+            </div>
+            <span class="docker-method-badge docker-badge-blue">one-liner</span>
+          </div>
+          <div class="docker-method-code">
+            <div class="docker-method-code-inner">
+              <span class="dmc-prompt">$</span>
+              <span class="dmc-text">docker run -p 3000:3000 aryansin1234/inkdown:latest</span>
+            </div>
+            <button class="docker-copy" data-copy="dm-run">Copy</button>
+            <pre class="dmc-hidden" id="snippet-dm-run">docker run -p 3000:3000 aryansin1234/inkdown:latest</pre>
+          </div>
+          <ul class="docker-method-bullets">
+            <li><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Web UI at <a href="http://localhost:3000" target="_blank" rel="noopener">localhost:3000</a></li>
+            <li><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> REST API at <code>/api/v1/convert</code></li>
+            <li><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> No auth required by default</li>
+          </ul>
+        </div>
+
+        <!-- Card 2: Compose -->
+        <div class="docker-method-card">
+          <div class="docker-method-header">
+            <div class="docker-method-step">02</div>
+            <div class="docker-method-meta">
+              <span class="docker-method-title">Docker Compose</span>
+              <span class="docker-method-desc">Persistent, configurable setup</span>
+            </div>
+            <span class="docker-method-badge docker-badge-green">recommended</span>
+          </div>
+          <div class="docker-method-code">
+            <div class="docker-method-code-inner">
+              <span class="dmc-prompt">$</span>
+              <span class="dmc-text">curl -O <span class="dmc-url">https://raw.githubusercontent.com/Aryansin1234/InkDown/docker-version/docker-compose.yml</span></span>
+            </div>
+            <div class="docker-method-code-inner" style="margin-top:6px">
+              <span class="dmc-prompt">$</span>
+              <span class="dmc-text">docker compose up</span>
+            </div>
+            <button class="docker-copy" data-copy="dm-compose">Copy</button>
+            <pre class="dmc-hidden" id="snippet-dm-compose">curl -O https://raw.githubusercontent.com/Aryansin1234/InkDown/docker-version/docker-compose.yml
+docker compose up</pre>
+          </div>
+          <ul class="docker-method-bullets">
+            <li><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Auto-restart on reboot</li>
+            <li><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Edit the file to set env vars</li>
+            <li><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Built-in health check</li>
+          </ul>
+        </div>
+
+        <!-- Card 3: Secure -->
+        <div class="docker-method-card">
+          <div class="docker-method-header">
+            <div class="docker-method-step">03</div>
+            <div class="docker-method-meta">
+              <span class="docker-method-title">Secured with API Key</span>
+              <span class="docker-method-desc">Production-grade access control</span>
+            </div>
+            <span class="docker-method-badge docker-badge-red">secure</span>
+          </div>
+          <div class="docker-method-code">
+            <div class="docker-method-code-inner">
+              <span class="dmc-prompt">$</span>
+              <span class="dmc-text">docker run -p 3000:3000 <span class="dmc-flag">\<br>&nbsp;&nbsp;-e</span> <span class="dmc-env">INKDOWN_API_KEYS</span>=<span class="dmc-val">my-secret-key</span> <span class="dmc-flag">\<br>&nbsp;&nbsp;</span>aryansin1234/inkdown:latest</span>
+            </div>
+            <button class="docker-copy" data-copy="dm-key">Copy</button>
+            <pre class="dmc-hidden" id="snippet-dm-key">docker run -p 3000:3000 \
+  -e INKDOWN_API_KEYS=my-secret-key \
+  aryansin1234/inkdown:latest</pre>
+          </div>
+          <ul class="docker-method-bullets">
+            <li><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Pass as <code>X-API-Key: ...</code></li>
+            <li><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Or <code>Authorization: Bearer ...</code></li>
+            <li><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Multiple keys, comma-separated</li>
+          </ul>
+        </div>
+
+      </div>
+
+      <!-- ── What's inside the image ───────────────────────── -->
+      <div class="docker-inside animate-in">
+        <div class="docker-inside-header">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="4" height="4" rx="1"/><rect x="8" y="11" width="4" height="4" rx="1"/><rect x="13" y="11" width="4" height="4" rx="1"/><rect x="8" y="6" width="4" height="4" rx="1"/><path d="M21 12.5c0 0-.5-2-3-2H3"/></svg>
+          What&rsquo;s inside the image
+        </div>
+        <div class="docker-inside-pills">
+          <span class="di-pill di-pill-blue">node:20-slim</span>
+          <span class="di-pill di-pill-gray">Chromium (system)</span>
+          <span class="di-pill di-pill-gray">Pandoc (DOCX)</span>
+          <span class="di-pill di-pill-gray">Puppeteer (no-download)</span>
+          <span class="di-pill di-pill-gray">marked · highlight.js</span>
+          <span class="di-pill di-pill-gray">Non-root user</span>
+          <span class="di-pill di-pill-gray">Express · multer · cors</span>
+          <span class="di-pill di-pill-green">~400 MB</span>
+        </div>
+      </div>
+
+      <!-- ── Environment Variables ──────────────────────────── -->
+      <div class="docker-section-title animate-in">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
+        Environment Variables
+      </div>
+      <div class="docker-env-table animate-in">
+        <table class="docker-env-inner">
+          <thead>
+            <tr>
+              <th>Variable</th>
+              <th>Default</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code class="de-var">PORT</code></td>
+              <td><code class="de-val">3000</code></td>
+              <td>HTTP port the server listens on inside the container</td>
+            </tr>
+            <tr>
+              <td><code class="de-var">INKDOWN_API_KEYS</code></td>
+              <td><span class="de-unset">unset · open</span></td>
+              <td>Comma-separated API keys. When set, <code>/api/v1/convert</code> requires a valid key.</td>
+            </tr>
+            <tr>
+              <td><code class="de-var">INKDOWN_CORS_ORIGINS</code></td>
+              <td><code class="de-val">*</code></td>
+              <td>Restrict CORS. E.g. <code>https://myapp.com,https://staging.myapp.com</code></td>
+            </tr>
+            <tr>
+              <td><code class="de-var">PUPPETEER_EXECUTABLE_PATH</code></td>
+              <td><code class="de-val-dim">/usr/bin/chromium</code></td>
+              <td>Chromium binary path — pre-configured in the image, no need to change</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- ── Build from Source ──────────────────────────────── -->
+      <div class="docker-section-title animate-in">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+        Build from Source
+      </div>
+      <div class="docker-build-panel animate-in">
+        <div class="docker-build-steps">
+          <div class="docker-build-step">
+            <div class="dbs-num">1</div>
+            <div class="dbs-body">
+              <span class="dbs-title">Clone the repository</span>
+              <div class="dbs-code">
+                <span class="dbc-prompt">$</span>
+                <span>git clone https://github.com/Aryansin1234/InkDown.git &amp;&amp; cd InkDown</span>
+              </div>
+            </div>
+          </div>
+          <div class="docker-build-step">
+            <div class="dbs-num">2</div>
+            <div class="dbs-body">
+              <span class="dbs-title">Build the Docker image</span>
+              <div class="dbs-code">
+                <span class="dbc-prompt">$</span>
+                <span>docker build -t aryansin1234/inkdown .</span>
+              </div>
+            </div>
+          </div>
+          <div class="docker-build-step">
+            <div class="dbs-num">3</div>
+            <div class="dbs-body">
+              <span class="dbs-title">Run locally</span>
+              <div class="dbs-code">
+                <span class="dbc-prompt">$</span>
+                <span>docker run -p 3000:3000 aryansin1234/inkdown</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="docker-build-copy-wrap">
+          <button class="docker-build-copy docker-copy" data-copy="dm-build">Copy all</button>
+          <pre class="dmc-hidden" id="snippet-dm-build">git clone https://github.com/Aryansin1234/InkDown.git &amp;&amp; cd InkDown
+docker build -t aryansin1234/inkdown .
+docker run -p 3000:3000 aryansin1234/inkdown</pre>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
   <!-- ── Footer ─────────────────────────────────────────────── -->
   <footer class="footer">
     <div class="container footer-inner">
@@ -913,7 +1196,7 @@ fs.writeFileSync('output.pdf', Buffer.from(await res.arrayBuffer()));</code></pr
         <span class="nav-logo-text">Ink<span class="nav-logo-accent">Down</span></span>
       </div>
       <p class="footer-tagline">Built with Puppeteer, marked, and highlight.js.</p>
-      <p class="footer-copy">Runs locally. Your documents never leave your machine.</p>
+      <p class="footer-copy">Runs locally or in Docker. Your documents never leave your machine.</p>
     </div>
   </footer>
 

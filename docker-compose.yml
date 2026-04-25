@@ -1,0 +1,35 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# InkDown — docker-compose.yml
+#
+# Quick start:
+#   docker compose up          # pull & run (open http://localhost:3000)
+#   docker compose up -d       # detached / background
+#   docker compose down        # stop & remove containers
+#
+# To require an API key for /api/v1/convert, uncomment INKDOWN_API_KEYS below.
+# ─────────────────────────────────────────────────────────────────────────────
+
+services:
+  inkdown:
+    build: .                                     # build from local Dockerfile
+    image: aryansin1234/inkdown:latest             # Docker Hub image
+    container_name: inkdown
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      # Restrict API access with comma-separated keys (optional):
+      # - INKDOWN_API_KEYS=my-secret-key-1,my-secret-key-2
+      #
+      # Allow cross-origin requests from specific origins (optional):
+      # - INKDOWN_CORS_ORIGINS=https://myapp.com,https://staging.myapp.com
+    # Uncomment to persist nothing (InkDown is stateless — no volume needed)
+    # volumes: []
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/api/v1/health', r => process.exit(r.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s

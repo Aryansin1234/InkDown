@@ -96,10 +96,11 @@ const REFERENCE_DOCX = path.join(__dirname, '..', 'reference.docx');
 async function convertToDocx(markdown, opts = {}) {
   const { title = 'Document', toc = false, autoBreak = false } = opts;
 
-  // 1. Run smart analyzer
+  // 1. Run smart analyzer (skip grid table → HTML conversion; Pandoc handles them natively)
   const { markdown: cleanMd, report } = await analyze(markdown, {
     autoBreak,
     fixHeadings: true,
+    skipGridTableConversion: true,
   });
 
   // 2. Convert pagebreak comments to Pandoc \newpage
@@ -116,7 +117,7 @@ async function convertToDocx(markdown, opts = {}) {
     const pandoc = getPandoc();
     const args = [
       inputPath,
-      '-f', 'markdown+smart+pipe_tables+strikeout+task_lists+fenced_code_blocks+backtick_code_blocks+autolink_bare_uris',
+      '-f', 'markdown+smart+pipe_tables+grid_tables+multiline_tables+simple_tables+strikeout+task_lists+fenced_code_blocks+backtick_code_blocks+autolink_bare_uris',
       '-t', 'docx',
       '-o', outputPath,
       '--wrap=none',

@@ -14,6 +14,7 @@ const puppeteer = require('puppeteer');
 const { marked } = require('marked');
 const hljs     = require('highlight.js');
 const { analyze } = require('./analyzer');
+const { convertGridTables } = require('./gridTableParser');
 
 // ── Slugify helper ────────────────────────────────────────────
 function slugify(text) {
@@ -239,8 +240,11 @@ async function convert(inputPath, outputPath, opts = {}) {
     console.log(`  ℹ Detected ${report.asciiArtBlocks.length} ASCII art block(s)`);
   }
 
+  // Pre-process grid & multiline tables into HTML
+  const processedMarkdown = convertGridTables(markdown);
+
   // Parse Markdown → HTML
-  let body = marked.parse(markdown);
+  let body = marked.parse(processedMarkdown);
 
   // Inline local images
   body = inlineImages(body, baseDir);

@@ -20,6 +20,88 @@ const { unified }  = require('unified');
 const remarkParse   = require('remark-parse').default || require('remark-parse');
 const remarkGfm     = require('remark-gfm').default || require('remark-gfm');
 const remarkStringify = require('remark-stringify').default || require('remark-stringify');
+const { convertGridTables } = require('./gridTableParser');
+
+// ── Grid/multiline table placeholder extraction ───────────────
+/**
+ * Find grid tables (+---+ syntax) and multiline tables (solid dash rules)
+ * in markdown, replace them with unique placeholders, and return
+ * the mapping so they can be restored after remark processing.
+ */
+function extractAndPlaceholderTables(markdown) {
+  const lines = markdown.split('\n');
+  const result = [];
+  const placeholders = [];
+  let i = 0;
+  let counter = 0;
+
+  while (i < lines.length) {
+    const trimmed = lines[i].trimEnd();
+
+    // Grid table: starts with +---+
+    if (/^\+[-=+]+\+$/.test(trimmed)) {
+      const tableLines = [lines[i]];
+      let j = i + 1;
+      while (j < lines.length) {
+        const tl = lines[j].trimEnd();
+        if (/^\+[-=+]+\+$/.test(tl) || /^\|/.test(tl)) {
+          tableLines.push(lines[j]);
+          if (/^\+[-=+]+\+$/.test(tl)) {
+            if (j + 1 >= lines.length || (!/^\|/.test(lines[j + 1].trimEnd()) && !/^\+/.test(lines[j + 1].trimEnd()))) {
+              j++;
+              break;
+            }
+          }
+          j++;
+        } else {
+          break;
+        }
+      }
+      if (tableLines.length > 2) {
+        const placeholder = `INKDOWNGRIDTABLE${counter++}PLACEHOLDER`;
+        placeholders.push([placeholder, tableLines.join('\n')]);
+        result.push(placeholder);
+        i = j;
+        continue;
+      }
+    }
+
+    // Multiline table: solid dashed rule (no spaces)
+    if (/^-{10,}$/.test(trimmed)) {
+      const tableLines = [lines[i]];
+      let j = i + 1;
+      let foundColumnRule = false;
+      let foundClosingRule = false;
+      while (j < lines.length) {
+        tableLines.push(lines[j]);
+        const tl = lines[j].trimEnd();
+        if (!foundColumnRule && /^[\s-]+$/.test(tl) && /---\s+---/.test(tl)) {
+          foundColumnRule = true;
+          j++;
+          continue;
+        }
+        if (foundColumnRule && /^-{10,}$/.test(tl)) {
+          foundClosingRule = true;
+          j++;
+          break;
+        }
+        j++;
+      }
+      if (foundColumnRule && foundClosingRule) {
+        const placeholder = `INKDOWNGRIDTABLE${counter++}PLACEHOLDER`;
+        placeholders.push([placeholder, tableLines.join('\n')]);
+        result.push(placeholder);
+        i = j;
+        continue;
+      }
+    }
+
+    result.push(lines[i]);
+    i++;
+  }
+
+  return { text: result.join('\n'), placeholders };
+}
 
 // ── Box-drawing / ASCII art detection ─────────────────────────
 const BOX_CHARS = /[┌┐└┘├┤┬┴┼│─═║╔╗╚╝╠╣╦╩╬▶▼►▲◄▷▽◁△→←↑↓╰╮╭╯┃━┅┆┇┈┉┊┋╭╮╯╰]/;
@@ -255,7 +337,23 @@ async function analyze(markdown, opts = {}) {
     fixHeadings = true,
     maxListDepth = 4,
     wideTableThreshold = 7,
+    skipGridTableConversion = false,
   } = opts;
+
+  // Pre-process grid & multiline tables so remark doesn't mangle them
+  // (skip for DOCX path — Pandoc handles these natively with proper borders)
+  let preprocessed;
+  let gridTablePlaceholders = null;
+
+  if (skipGridTableConversion) {
+    // Extract grid/multiline tables and replace with placeholders so remark
+    // doesn't escape the pipe characters during stringify
+    const { text, placeholders } = extractAndPlaceholderTables(markdown);
+    preprocessed = text;
+    gridTablePlaceholders = placeholders;
+  } else {
+    preprocessed = convertGridTables(markdown);
+  }
 
   const processor = unified()
     .use(remarkParse)
@@ -279,8 +377,15 @@ async function analyze(markdown, opts = {}) {
     fences: true,
   });
 
-  const file = await processor.process(markdown);
-  const cleanMarkdown = String(file);
+  const file = await processor.process(preprocessed);
+  let cleanMarkdown = String(file);
+
+  // Restore original grid/multiline table blocks from placeholders
+  if (gridTablePlaceholders) {
+    for (const [placeholder, original] of gridTablePlaceholders) {
+      cleanMarkdown = cleanMarkdown.replace(placeholder, original);
+    }
+  }
 
   // Gather report
   const report = {

@@ -1193,6 +1193,56 @@ function initApiDocs() {
 }
 
 /* ══════════════════════════════════════════════════════════════
+   DOCKER SECTION — copy buttons + terminal header copy
+   ══════════════════════════════════════════════════════════════ */
+function initDockerSection() {
+  // ── Card / build-panel copy buttons (.docker-copy) ──
+  // Each button sits next to a hidden <pre id="snippet-dm-*"> that holds
+  // the clean plain-text version of the command.
+  document.querySelectorAll('.docker-copy').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id  = btn.dataset.copy;
+      const pre = id ? document.getElementById(`snippet-${id}`) : null;
+      // Fallback: grab nearest dmc-text inside the same code block
+      const text = pre
+        ? (pre.innerText || pre.textContent).replace(/&amp;/g, '&').trim()
+        : (() => {
+            const wrap = btn.closest('.docker-method-code, .docker-build-copy-wrap');
+            return wrap ? (wrap.innerText || wrap.textContent).trim() : '';
+          })();
+
+      if (!text) return;
+      navigator.clipboard.writeText(text).then(() => {
+        const orig = btn.textContent;
+        btn.textContent = 'Copied!';
+        btn.classList.add('copied');
+        setTimeout(() => {
+          btn.textContent = orig;
+          btn.classList.remove('copied');
+        }, 2000);
+      });
+    });
+  });
+
+  // ── Terminal bar "Copy" button ──
+  const termCopy = document.getElementById('dockerTerminalCopy');
+  if (termCopy) {
+    const cmd = 'docker run -p 3000:3000 aryansin1234/inkdown:latest';
+    termCopy.addEventListener('click', () => {
+      navigator.clipboard.writeText(cmd).then(() => {
+        const orig = termCopy.textContent;
+        termCopy.textContent = 'Copied!';
+        termCopy.classList.add('copied');
+        setTimeout(() => {
+          termCopy.textContent = orig;
+          termCopy.classList.remove('copied');
+        }, 2000);
+      });
+    });
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════
    BOOTSTRAP
    ══════════════════════════════════════════════════════════════ */
 document.addEventListener('DOMContentLoaded', () => {
@@ -1207,5 +1257,6 @@ document.addEventListener('DOMContentLoaded', () => {
   initOptions();
   initConvertBtn();
   initApiDocs();
+  initDockerSection();
   initScrollAnimations();
 });
