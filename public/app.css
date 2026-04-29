@@ -132,9 +132,9 @@ code {
 /* ── Container ──────────────────────────────────────────────── */
 .container {
   width: 100%;
-  max-width: 1200px;
+  max-width: 1440px;
   margin: 0 auto;
-  padding: 0 var(--space-xl);
+  padding: 0 var(--space-md);
 }
 
 /* ── Utility ────────────────────────────────────────────────── */
@@ -825,7 +825,7 @@ code {
 .panel-body {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  min-height: 420px;
+  min-height: 580px;
 }
 
 /* Editor pane */
@@ -1921,8 +1921,8 @@ code {
 }
 
 /* Large desktop */
-@media (min-width: 1200px) {
-  .container { padding: 0 var(--space-2xl); }
+@media (min-width: 1440px) {
+  .container { padding: 0 var(--space-lg); }
   .features-grid { grid-template-columns: repeat(3, 1fr); }
 }
 
