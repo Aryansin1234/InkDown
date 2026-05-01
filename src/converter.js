@@ -15,6 +15,8 @@ const { marked } = require('marked');
 const hljs     = require('highlight.js');
 const { analyze } = require('./analyzer');
 const { convertGridTables } = require('./gridTableParser');
+const markedFootnote = require('marked-footnote');
+const markedKatex = require('marked-katex-extension');
 
 // ── Slugify helper ────────────────────────────────────────────
 function slugify(text) {
@@ -70,6 +72,12 @@ function configureMarked() {
       }
     },
   });
+
+  // Footnotes: [^1] → rendered as numbered footnotes at end of document
+  marked.use(markedFootnote());
+
+  // KaTeX: $inline$ and $$display$$ math equations
+  marked.use(markedKatex({ throwOnError: false }));
 }
 
 configureMarked();
@@ -116,7 +124,20 @@ function buildTOC(headings) {
 }
 
 // ── HTML template ────────────────────────────────────────────
-function buildHtml({ body, toc, autoBreak, title, highlightCss, printCss }) {
+function buildCoverPage({ title, author, date }) {
+  const dateStr = date || new Date().toLocaleDateString('en-US', {
+    year: 'numeric', month: 'long', day: 'numeric',
+  });
+  let html = `<div class="doc-cover">
+  <h1>${escapeHtml(title)}</h1>\n`;
+  if (author) {
+    html += `  <p class="subtitle">${escapeHtml(author)}</p>\n`;
+  }
+  html += `  <p class="meta">${escapeHtml(dateStr)}</p>\n</div>\n`;
+  return html;
+}
+
+function buildHtml({ body, toc, coverPage, autoBreak, title, highlightCss, printCss, katexCss }) {
   const bodyClass = autoBreak ? 'auto-break-h1' : '';
 
   return `<!DOCTYPE html>
@@ -131,8 +152,10 @@ ${highlightCss}
   <style>
 ${printCss}
   </style>
+${katexCss ? `  <link rel="stylesheet" href="${katexCss}">` : ''}
 </head>
 <body class="${bodyClass}">
+  ${coverPage}
   ${toc}
   <main>
     ${body}
@@ -162,7 +185,16 @@ function loadAssets() {
     'utf-8'
   );
 
-  return { highlightCss, printCss };
+  // KaTeX CSS for math rendering
+  let katexCss = '';
+  const katexCssPath = path.join(
+    __dirname, '..', 'node_modules', 'katex', 'dist', 'katex.min.css'
+  );
+  if (fs.existsSync(katexCssPath)) {
+    katexCss = fs.readFileSync(katexCssPath, 'utf-8');
+  }
+
+  return { highlightCss, printCss, katexCss };
 }
 
 // ── Inline local images as base64 ────────────────────────────
@@ -210,7 +242,7 @@ function inlineImages(html, baseDir) {
  * @param {string}  [opts.title]           - PDF title (defaults to filename)
  */
 async function convert(inputPath, outputPath, opts = {}) {
-  const { toc = false, autoBreak = false, title } = opts;
+  const { toc = false, autoBreak = false, title, author = '' } = opts;
 
   const absInput  = path.resolve(inputPath);
   const absOutput = path.resolve(outputPath);
@@ -225,7 +257,7 @@ async function convert(inputPath, outputPath, opts = {}) {
   fs.mkdirSync(path.dirname(absOutput), { recursive: true });
 
   const rawMarkdown = fs.readFileSync(absInput, 'utf-8');
-  const { highlightCss, printCss } = loadAssets();
+  const { highlightCss, printCss, katexCss } = loadAssets();
 
   // Smart analysis pass — normalize headings, detect issues
   const { markdown, report } = await analyze(rawMarkdown, {
@@ -252,8 +284,14 @@ async function convert(inputPath, outputPath, opts = {}) {
   // Build optional TOC
   const tocHtml = toc ? buildTOC(extractHeadings(body)) : '';
 
+  // Build cover page
+  const coverPage = buildCoverPage({ title: docTitle, author });
+
+  // Inline KaTeX CSS directly into the document
+  const katexStyle = katexCss ? `<style>${katexCss}</style>` : '';
+
   // Assemble full HTML document
-  const html = buildHtml({ body, toc: tocHtml, autoBreak, title: docTitle, highlightCss, printCss });
+  const html = buildHtml({ body, toc: tocHtml, coverPage, autoBreak, title: docTitle, highlightCss, printCss: printCss + '\n' + (katexCss || ''), katexCss: '' });
 
   // Launch Puppeteer and render PDF
   const browser = await puppeteer.launch({

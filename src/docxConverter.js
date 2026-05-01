@@ -37,7 +37,9 @@ function cleanup(...files) {
  * so Pandoc inserts actual page breaks in the DOCX output.
  */
 function convertPageBreaks(md) {
-  return md.replace(/<!--\s*pagebreak\s*-->/gi, '\\newpage');
+  return md
+    .replace(/<!--\s*pagebreak\s*-->/gi, '\\newpage')
+    .replace(/<div\s+style\s*=\s*"[^"]*page-break[^"]*"\s*[^>]*>\s*<\/div>/gi, '\\newpage');
 }
 
 /**
@@ -94,7 +96,14 @@ const REFERENCE_DOCX = path.join(__dirname, '..', 'reference.docx');
  * @returns {Promise<{ buffer: Buffer, report: object }>}
  */
 async function convertToDocx(markdown, opts = {}) {
-  const { title = 'Document', toc = false, autoBreak = false } = opts;
+  const {
+    title = 'Document',
+    toc = false,
+    autoBreak = false,
+    author = '',
+    date = '',
+    numberSections = false,
+  } = opts;
 
   // 1. Run smart analyzer (skip grid table → HTML conversion; Pandoc handles them natively)
   const { markdown: cleanMd, report } = await analyze(markdown, {
@@ -104,9 +113,27 @@ async function convertToDocx(markdown, opts = {}) {
   });
 
   // 2. Convert pagebreak comments to Pandoc \newpage
-  const finalMd = convertPageBreaks(cleanMd);
+  let finalMd = convertPageBreaks(cleanMd);
 
-  // 3. Write to temp .md file
+  // 3. Build cover page — YAML frontmatter tells Pandoc to generate
+  //    Title / Author / Date blocks using reference.docx styles.
+  //    A \newpage ensures content starts on a fresh page.
+  const coverDate = date || new Date().toLocaleDateString('en-US', {
+    year: 'numeric', month: 'long', day: 'numeric',
+  });
+  const yamlLines = [
+    '---',
+    `title: "${title.replace(/"/g, '\\"')}"`,
+  ];
+  if (author) yamlLines.push(`author: "${author.replace(/"/g, '\\"')}"`);
+  yamlLines.push(`date: "${coverDate}"`);
+  yamlLines.push('---');
+  yamlLines.push('');
+  yamlLines.push('\\newpage');
+  yamlLines.push('');
+  finalMd = yamlLines.join('\n') + finalMd;
+
+  // 4. Write to temp .md file
   const inputPath  = tmpFile('.md');
   const outputPath = tmpFile('.docx');
 
@@ -117,21 +144,32 @@ async function convertToDocx(markdown, opts = {}) {
     const pandoc = getPandoc();
     const args = [
       inputPath,
-      '-f', 'markdown+smart+pipe_tables+grid_tables+multiline_tables+simple_tables+strikeout+task_lists+fenced_code_blocks+backtick_code_blocks+autolink_bare_uris',
+      '-f', 'markdown+smart+pipe_tables+grid_tables+multiline_tables+simple_tables+strikeout+task_lists+fenced_code_blocks+backtick_code_blocks+autolink_bare_uris+footnotes+tex_math_dollars+definition_lists+implicit_figures',
       '-t', 'docx',
       '-o', outputPath,
       '--wrap=none',
-      `--metadata=title:${title}`,
     ];
 
-    // TOC
+    // Native TOC via Lua filter — produces a real Word TOC field
+    // that users can right-click → Update Field to populate.
     if (toc) {
-      args.push('--toc', '--toc-depth=4');
+      args.push('--metadata=native-toc:true', '--metadata=toc-depth:4');
     }
 
-    // Reference template (custom styles)
+    // Lua filter for DOCX enhancements (native TOC field, etc.)
+    const luaFilter = path.join(__dirname, 'docx-enhancements.lua');
+    if (fs.existsSync(luaFilter)) {
+      args.push(`--lua-filter=${luaFilter}`);
+    }
+
+    // Reference template (custom styles, header/footer, margins)
     if (fs.existsSync(REFERENCE_DOCX)) {
       args.push(`--reference-doc=${REFERENCE_DOCX}`);
+    }
+
+    // Numbered sections (1., 1.1, 1.1.1, etc.)
+    if (numberSections) {
+      args.push('--number-sections');
     }
 
     // Syntax highlighting style

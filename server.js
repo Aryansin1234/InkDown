@@ -144,6 +144,8 @@ async function handleConvert(req, res) {
       toc:       req.body.toc       === 'true' || req.body.toc       === true,
       autoBreak: req.body.autoBreak === 'true' || req.body.autoBreak === true,
       title:     req.body.title     ? String(req.body.title).trim()  : undefined,
+      author:    req.body.author    ? String(req.body.author).trim() : '',
+      numberSections: req.body.numberSections === 'true' || req.body.numberSections === true,
     };
     const format = ((req.body.format || 'pdf') + '').toLowerCase();
     const isDocx = format === 'docx';
@@ -163,6 +165,8 @@ async function handleConvert(req, res) {
         title:     opts.title || baseName,
         toc:       opts.toc,
         autoBreak: opts.autoBreak,
+        author:    opts.author,
+        numberSections: opts.numberSections,
       });
 
       const filename = `${baseName}.docx`;

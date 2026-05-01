@@ -237,8 +237,8 @@ nav.toc {
   margin-bottom: 2em;
   page-break-inside: avoid;
   break-inside: avoid;
-  page-break-after: avoid;
-  break-after: avoid;
+  page-break-after: always;
+  break-after: page;
 }
 
 nav.toc h2 {
@@ -273,24 +273,95 @@ nav.toc .toc-h4 { padding-left: 2em;  font-size: 12px; color: #6a737d; }
 /* ── Cover / Front matter ───────────────────────────────────── */
 .doc-cover {
   text-align: center;
-  padding: 60px 0 40px;
+  padding: 140px 0 40px;
   page-break-after: always;
   break-after: page;
+  min-height: 60vh;
 }
 
 .doc-cover h1 {
-  font-size: 2.4em;
+  font-size: 2.6em;
   border: none;
-  margin-bottom: 0.2em;
+  margin-bottom: 0.3em;
+  padding-bottom: 0.3em;
+  border-bottom: 2px solid #e1e4e8;
 }
 
 .doc-cover .subtitle {
-  font-size: 1.1em;
+  font-size: 1.15em;
   color: #586069;
-  margin-bottom: 2em;
+  margin-bottom: 1.5em;
 }
 
 .doc-cover .meta {
-  font-size: 12px;
+  font-size: 13px;
   color: #6a737d;
+  font-style: italic;
+}
+
+/* ── Definition Lists ───────────────────────────────────────── */
+dl {
+  margin: 1em 0;
+}
+
+dt {
+  font-weight: 600;
+  margin-top: 0.8em;
+  color: #24292e;
+}
+
+dd {
+  margin: 0.2em 0 0.5em 2em;
+  padding-left: 1em;
+  border-left: 3px solid #e1e4e8;
+  color: #444d56;
+}
+
+/* ── Footnotes ──────────────────────────────────────────────── */
+.footnotes {
+  margin-top: 3em;
+  padding-top: 1em;
+  border-top: 1px solid #e1e4e8;
+  font-size: 12px;
+  color: #586069;
+}
+
+.footnotes ol {
+  padding-left: 1.5em;
+}
+
+.footnotes li {
+  margin-bottom: 0.5em;
+}
+
+.footnotes li p {
+  margin: 0;
+}
+
+sup a {
+  color: #0366d6;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+a.footnote-backref {
+  text-decoration: none;
+  margin-left: 0.3em;
+}
+
+/* ── Task Lists ─────────────────────────────────────────────── */
+ul.contains-task-list {
+  list-style: none;
+  padding-left: 1.5em;
+}
+
+.task-list-item input[type="checkbox"] {
+  margin-right: 0.5em;
+}
+
+/* ── KaTeX Math ─────────────────────────────────────────────── */
+.katex-display {
+  margin: 1.2em 0;
+  page-break-inside: avoid;
+  break-inside: avoid;
 }

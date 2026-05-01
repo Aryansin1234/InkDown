@@ -1,4 +1,4 @@
-# Master Test Document for InkDown
+git pu# Master Test Document for InkDown
 
 <h2 style="color: #2F80ED;">1. HTML Elements & Colored Headings</h2>
 
@@ -190,3 +190,79 @@ This concludes the master test for multi-page document generation. There should 
 4. Are headers, footers, or margins cutting off any text?
 
 ### End of Master Test Document
+
+---
+
+## 13. Footnotes
+
+This paragraph has a footnote[^1] and another one[^longnote].
+
+[^1]: This is the first footnote — it should appear at the bottom of the document.
+
+[^longnote]: Here's a longer footnote with multiple paragraphs.
+
+    Subsequent paragraphs are indented to show they belong to the previous footnote.
+
+    This tests Pandoc's native footnote/endnote rendering in DOCX.
+
+---
+
+## 14. Math Equations
+
+Inline math: The quadratic formula is $x = \frac{-b \pm \sqrt{b^2-4ac}}{2a}$.
+
+Block math (display mode):
+
+$$
+\int_{-\infty}^{\infty} e^{-x^2} dx = \sqrt{\pi}
+$$
+
+Einstein's famous equation: $E = mc^2$
+
+The Pythagorean theorem: $a^2 + b^2 = c^2$
+
+---
+
+## 15. Definition Lists
+
+Term 1
+:   Definition for term 1. This tests Pandoc's definition list extension.
+
+Term 2
+:   First definition for term 2.
+:   Second definition for term 2 — terms can have multiple definitions.
+
+Markdown
+:   A lightweight markup language for creating formatted text using a plain-text editor.
+
+InkDown
+:   A tool that converts Markdown to pixel-perfect PDF and DOCX documents with syntax highlighting, smart tables, and a REST API.
+
+---
+
+## 16. Figures with Captions
+
+The following image should become a proper Word figure with a caption:
+
+![This is a figure caption — it should appear below the image in Word](https://via.placeholder.com/600x200/24292E/FFFFFF/?text=Figure+with+Caption)
+
+---
+
+## 17. Feature Parity Checklist
+
+| Feature | PDF | DOCX | Notes |
+|---------|-----|------|-------|
+| Cover page | ✅ | ✅ | Title, author, date |
+| Table of Contents | ✅ | ✅ | Native Word TOC field |
+| Header / Footer | ✅ | ✅ | Title + Page X/Y |
+| Page numbers | ✅ | ✅ | Footer right-aligned |
+| Code block styling | ✅ | ✅ | Gray bg, border, Consolas |
+| Inline code styling | ✅ | ✅ | Gray bg, monospace |
+| Table borders | ✅ | ✅ | #E1E4E8, header shading |
+| Grid tables | ✅ | ✅ | Pandoc native |
+| Footnotes | ✅ | ✅ | Pandoc native endnotes |
+| Math equations | ✅ | ✅ | Native Word OMML |
+| Definition lists | ✅ | ✅ | Pandoc extension |
+| Figure captions | ✅ | ✅ | implicit_figures |
+| Page breaks | ✅ | ✅ | \newpage |
+| Syntax highlighting | ✅ | ✅ | 190+ languages |
