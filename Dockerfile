@@ -16,7 +16,6 @@ LABEL org.opencontainers.image.title="InkDown" \
 
 # ── System dependencies for Chromium (used by Puppeteer) + Pandoc (DOCX) ──
 RUN apt-get update && apt-get install -y --no-install-recommends \
-      chromium \
       pandoc \
       fonts-liberation \
       fonts-noto-color-emoji \
@@ -56,22 +55,20 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
       xdg-utils \
    && rm -rf /var/lib/apt/lists/*
 
-# ── Tell Puppeteer to use the system Chromium instead of downloading one ───
-ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
-    PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium \
-    NODE_ENV=production \
+# ── Let Puppeteer download its own bundled Chromium (system one has crashpad bug) ──
+ENV NODE_ENV=production \
     PORT=3000
 
 # ── Create a non-root user (security best-practice) ───────────────────────
-RUN groupadd --system inkdown && useradd --system --gid inkdown inkdown
+RUN groupadd --system inkdown && useradd --system --gid inkdown --create-home inkdown
 
 # ── App directory ─────────────────────────────────────────────────────────
 WORKDIR /app
 
-# ── Install Node dependencies ──────────────────────────────────────────────
-# Copy manifests first so Docker can cache this layer
+# ── Install Node dependencies (Puppeteer will download its bundled Chrome) ─
 COPY package*.json ./
-RUN npm ci --omit=dev
+ENV PUPPETEER_CACHE_DIR=/app/.cache/puppeteer
+RUN npm ci --omit=dev && npx puppeteer browsers install chrome
 
 # ── Copy application source ────────────────────────────────────────────────
 COPY public/     ./public/

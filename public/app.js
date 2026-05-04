@@ -139,12 +139,15 @@ function resolveElements() {
 function initTheme() {
   // Theme is already applied before paint by the inline script in <head>.
   // Here we just wire the button to toggle it.
-  el.themeToggle.addEventListener('click', () => {
+  const toggle = () => {
     const current = document.documentElement.getAttribute('data-theme') || 'dark';
     const next    = current === 'dark' ? 'light' : 'dark';
     document.documentElement.setAttribute('data-theme', next);
     localStorage.setItem('md-theme', next);
-  });
+  };
+  el.themeToggle.addEventListener('click', toggle);
+  const mobileNavToggle = document.getElementById('mobileNavThemeToggle');
+  if (mobileNavToggle) mobileNavToggle.addEventListener('click', toggle);
 }
 
 

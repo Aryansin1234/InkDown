@@ -296,7 +296,17 @@ async function convert(inputPath, outputPath, opts = {}) {
   // Launch Puppeteer and render PDF
   const browser = await puppeteer.launch({
     headless: true,
-    args: ['--no-sandbox', '--disable-setuid-sandbox'],
+    args: [
+      '--no-sandbox',
+      '--disable-setuid-sandbox',
+      '--disable-dev-shm-usage',
+      '--disable-gpu',
+      '--disable-software-rasterizer',
+      '--disable-extensions',
+      '--disable-crash-reporter',
+      '--disable-breakpad',
+      '--single-process',
+    ],
   });
 
   try {

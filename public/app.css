@@ -301,12 +301,17 @@ code {
   transition: color 0.15s ease, background 0.15s ease, border-color 0.15s ease, transform 0.2s ease;
   flex-shrink: 0;
 }
-.theme-toggle:hover { color: var(--text-primary); transform: rotate(15deg); }
+.theme-toggle:hover { color: var(--text-primary); }
 
 .theme-icon-sun  { display: block; }
 .theme-icon-moon { display: none;  }
 [data-theme="light"] .theme-icon-sun  { display: none;  }
 [data-theme="light"] .theme-icon-moon { display: block; }
+
+/* Mobile theme toggle — only visible on mobile, next to hamburger */
+.mobile-theme-toggle {
+  display: none;
+}
 
 /* Hamburger */
 .hamburger {
@@ -1807,9 +1812,10 @@ code {
   .section-features { padding: var(--space-xl) 0; }
   .section-sub { margin-bottom: var(--space-lg); }
 
-  /* Nav: hide center links + right group, show hamburger */
+  /* Nav: hide center links + right group, show hamburger + mobile theme toggle */
   .nav-center, .nav-right { display: none; }
-  .hamburger { display: flex; }
+  .mobile-theme-toggle { display: inline-flex; margin-left: auto; }
+  .hamburger { display: flex; margin-left: var(--space-sm); }
 
   /* Options & convert bar stacked */
   .options-bar { flex-direction: column; gap: var(--space-md); padding: var(--space-md); }
