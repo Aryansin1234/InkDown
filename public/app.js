@@ -130,6 +130,16 @@ function resolveElements() {
     convertIdle:   document.querySelector('.btn-convert-idle'),
     convertLoading:document.querySelector('.btn-convert-loading'),
     toastContainer:document.getElementById('toastContainer'),
+
+    // Preview
+    previewBtn:         document.getElementById('previewBtn'),
+    previewIdle:        document.querySelector('.btn-preview-idle'),
+    previewLoading:     document.querySelector('.btn-preview-loading'),
+    previewOverlay:     document.getElementById('previewOverlay'),
+    previewOverlayFrame:document.getElementById('previewOverlayFrame'),
+    previewOverlayFilename: document.getElementById('previewOverlayFilename'),
+    previewDownloadBtn: document.getElementById('previewDownloadBtn'),
+    previewCloseBtn:    document.getElementById('previewCloseBtn'),
   };
 }
 
@@ -1246,6 +1256,136 @@ function initDockerSection() {
 }
 
 /* ══════════════════════════════════════════════════════════════
+   FULLSCREEN PREVIEW
+   ══════════════════════════════════════════════════════════════ */
+let _previewBlobUrl = null;
+let _previewFilename = 'document.pdf';
+
+function initPreviewBtn() {
+  el.previewBtn.addEventListener('click', handlePreview);
+  el.previewCloseBtn.addEventListener('click', closePreviewOverlay);
+  el.previewDownloadBtn.addEventListener('click', downloadFromPreview);
+
+  // Escape key closes overlay
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !el.previewOverlay.classList.contains('hidden')) {
+      closePreviewOverlay();
+    }
+  });
+}
+
+async function handlePreview() {
+  if (state.loading) return;
+
+  // Only PDF can be previewed in-browser
+  if (state.format === 'docx') {
+    showToast('Preview is only available for PDF. Generating DOCX download instead…', 'error');
+    handleConvert();
+    return;
+  }
+
+  // Validate input
+  if (state.mode === 'editor' && !state.markdownText.trim()) {
+    showToast('Please add some Markdown content first', 'error');
+    return;
+  }
+  if (state.mode === 'upload' && !state.uploadedFile) {
+    showToast('Please upload a Markdown file first', 'error');
+    return;
+  }
+  if (state.mode === 'url' && !state.urlValue.trim()) {
+    showToast('Please enter or load a URL first', 'error');
+    return;
+  }
+
+  setPreviewLoading(true);
+
+  const fd = new FormData();
+
+  if (state.mode === 'editor') {
+    fd.append('text', state.markdownText);
+  } else if (state.mode === 'upload') {
+    fd.append('file', state.uploadedFile);
+  } else {
+    if (state.markdownText && state.markdownText.trim()) {
+      fd.append('text', state.markdownText);
+    } else {
+      fd.append('url', state.urlValue);
+    }
+  }
+
+  fd.append('toc',       state.options.toc.toString());
+  fd.append('autoBreak', state.options.autoBreak.toString());
+  fd.append('format',    'pdf');
+  if (state.options.title) fd.append('title', state.options.title);
+
+  try {
+    const resp = await fetch('/api/convert', { method: 'POST', body: fd });
+
+    if (!resp.ok) {
+      let msg = `Server error (${resp.status})`;
+      try {
+        const data = await resp.json();
+        msg = data.error || msg;
+      } catch { /* ignore */ }
+      throw new Error(msg);
+    }
+
+    // Get filename
+    _previewFilename = 'document.pdf';
+    const cd = resp.headers.get('Content-Disposition');
+    if (cd) {
+      const m = cd.match(/filename="([^"]+)"/);
+      if (m) _previewFilename = m[1];
+    }
+
+    // Revoke previous blob
+    if (_previewBlobUrl) URL.revokeObjectURL(_previewBlobUrl);
+
+    const blob = await resp.blob();
+    _previewBlobUrl = URL.createObjectURL(blob);
+
+    // Show overlay
+    el.previewOverlayFilename.textContent = _previewFilename;
+    el.previewOverlayFrame.src = _previewBlobUrl;
+    el.previewOverlay.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+
+    showToast('Preview ready', 'success');
+  } catch (err) {
+    showToast(err.message || 'Preview failed', 'error');
+  } finally {
+    setPreviewLoading(false);
+  }
+}
+
+function closePreviewOverlay() {
+  el.previewOverlay.classList.add('hidden');
+  el.previewOverlayFrame.src = '';
+  document.body.style.overflow = '';
+}
+
+function downloadFromPreview() {
+  if (!_previewBlobUrl) return;
+  const a = document.createElement('a');
+  a.href = _previewBlobUrl;
+  a.download = _previewFilename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  showToast(`${_previewFilename} downloaded!`, 'success');
+}
+
+function setPreviewLoading(isLoading) {
+  el.previewBtn.disabled = isLoading;
+  el.previewIdle.classList.toggle('hidden', isLoading);
+  el.previewLoading.classList.toggle('hidden', !isLoading);
+  // Also disable convert while previewing
+  el.convertBtn.disabled = isLoading;
+  state.loading = isLoading;
+}
+
+/* ══════════════════════════════════════════════════════════════
    BOOTSTRAP
    ══════════════════════════════════════════════════════════════ */
 document.addEventListener('DOMContentLoaded', () => {
@@ -1259,6 +1399,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initUrlInput();
   initOptions();
   initConvertBtn();
+  initPreviewBtn();
   initApiDocs();
   initDockerSection();
   initScrollAnimations();

@@ -140,29 +140,38 @@ async function handleConvert(req, res) {
     }
 
     // ── Parse options ──────────────────────────────────────
+    // Derive base filename early so we can use it as fallback title
+    let baseName = 'document';
+    if (req.body.title && String(req.body.title).trim()) {
+      baseName = String(req.body.title).trim().replace(/[^\w\s-]/g, '').trim().replace(/\s+/g, '-');
+    } else if (req.file && req.file.originalname) {
+      baseName = path.basename(req.file.originalname, path.extname(req.file.originalname));
+    } else {
+      // Try to extract the first H1 from the markdown content
+      const content = fs.existsSync(inputPath) ? fs.readFileSync(inputPath, 'utf-8') : '';
+      const h1Match = content.match(/^#\s+(.+)$/m);
+      if (h1Match) baseName = h1Match[1].trim();
+    }
+
+    // Sanitize baseName for use in Content-Disposition header (ASCII-safe filename)
+    const displayTitle = baseName;
+    baseName = baseName.replace(/[^\w\s-]/g, '').trim().replace(/\s+/g, '-') || 'document';
+
     const opts = {
       toc:       req.body.toc       === 'true' || req.body.toc       === true,
       autoBreak: req.body.autoBreak === 'true' || req.body.autoBreak === true,
-      title:     req.body.title     ? String(req.body.title).trim()  : undefined,
+      title:     req.body.title     ? String(req.body.title).trim()  : displayTitle,
       author:    req.body.author    ? String(req.body.author).trim() : '',
       numberSections: req.body.numberSections === 'true' || req.body.numberSections === true,
     };
     const format = ((req.body.format || 'pdf') + '').toLowerCase();
     const isDocx = format === 'docx';
 
-    // ── Derive base filename ───────────────────────────────
-    let baseName = 'document';
-    if (opts.title) {
-      baseName = opts.title.replace(/[^\w\s-]/g, '').trim().replace(/\s+/g, '-');
-    } else if (req.file && req.file.originalname) {
-      baseName = path.basename(req.file.originalname, path.extname(req.file.originalname));
-    }
-
     // ── Convert ────────────────────────────────────────────
     if (isDocx) {
       const mdContent = fs.readFileSync(inputPath, 'utf-8');
       const { buffer } = await convertToDocx(mdContent, {
-        title:     opts.title || baseName,
+        title:     opts.title,
         toc:       opts.toc,
         autoBreak: opts.autoBreak,
         author:    opts.author,

@@ -312,8 +312,8 @@ async function convert(inputPath, outputPath, opts = {}) {
   try {
     const page = await browser.newPage();
 
-    // setContent waits for DOM; waitUntil ensures fonts / images are loaded
-    await page.setContent(html, { waitUntil: 'networkidle0' });
+    // setContent waits for DOM — all CSS is inlined so no network needed
+    await page.setContent(html, { waitUntil: 'domcontentloaded' });
 
     await page.pdf({
       path:            absOutput,

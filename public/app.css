@@ -1365,6 +1365,114 @@ code {
   to { transform: rotate(360deg); }
 }
 
+/* ── Convert actions row ────────────────────────────────────── */
+.convert-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* ── Preview button ─────────────────────────────────────────── */
+.btn-preview {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 22px;
+  background: var(--surface-alt, var(--surface));
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+  transition: background var(--t-base), border-color var(--t-base), opacity var(--t-base), transform var(--t-fast);
+  white-space: nowrap;
+  cursor: pointer;
+}
+.btn-preview:hover { background: var(--border); }
+.btn-preview:active { transform: scale(0.97); }
+.btn-preview:disabled { opacity: 0.4; cursor: not-allowed; }
+.btn-preview-idle,
+.btn-preview-loading {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ── Fullscreen preview overlay ─────────────────────────────── */
+.preview-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+  animation: previewFadeIn 0.25s ease-out;
+}
+.preview-overlay.hidden { display: none; }
+
+@keyframes previewFadeIn {
+  from { opacity: 0; transform: scale(0.98); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+.preview-overlay-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+  padding: 10px 20px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.preview-overlay-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.preview-overlay-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.preview-overlay-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 16px;
+  border-radius: var(--r-pill);
+  font-size: 13px;
+  font-weight: 500;
+  background: var(--surface-alt, var(--surface));
+  color: var(--text);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: background var(--t-base), opacity var(--t-base);
+}
+.preview-overlay-btn:hover { background: var(--border); }
+.preview-overlay-close {
+  background: transparent;
+  border: none;
+  color: var(--text-dim);
+  padding: 7px 10px;
+}
+.preview-overlay-close:hover { color: var(--red); background: transparent; }
+
+.preview-overlay-frame {
+  flex: 1;
+  width: 100%;
+  border: none;
+  background: #fff;
+}
+
 /* ── Toast notifications ────────────────────────────────────── */
 .toast-container {
   position: absolute;
@@ -1822,7 +1930,8 @@ code {
   .options-group { flex-direction: column; gap: var(--space-sm); }
   .options-title { min-width: 0; }
   .convert-bar { flex-direction: column; align-items: stretch; gap: var(--space-sm); padding: var(--space-md); }
-  .btn-convert { width: 100%; justify-content: center; }
+  .convert-actions { flex-direction: column; gap: var(--space-sm); }
+  .btn-convert, .btn-preview { width: 100%; justify-content: center; }
   .convert-info { justify-content: center; }
   .format-cards { align-self: center; }
 
@@ -1892,6 +2001,7 @@ code {
 
   /* Convert bar */
   .btn-convert { padding: 10px 16px; font-size: 13px; }
+  .btn-preview { padding: 10px 16px; font-size: 13px; }
   .format-card { padding: 5px 12px; min-width: 60px; }
   .format-card-label { font-size: 11px; }
   .format-card-desc { font-size: 9px; }

@@ -139,16 +139,15 @@ docker run -p 8080:8080 -e PORT=8080 aryansin1234/inkdown:latest
 | `PORT` | `3000` | Port the server listens on |
 | `INKDOWN_API_KEYS` | *(none — open)* | Comma-separated API keys. When set, `/api/v1/convert` requires a valid key. |
 | `INKDOWN_CORS_ORIGINS` | `*` | Allowed CORS origins. Restrict in production: `https://myapp.com` |
-| `PUPPETEER_EXECUTABLE_PATH` | `/usr/bin/chromium` | Pre-set in image — no need to change |
 
 ### What's Inside the Image
 
 | Component | Purpose |
 |-----------|---------|
 | `node:20-slim` | JavaScript runtime |
-| Chromium (system) | Headless PDF rendering via Puppeteer |
+| Chrome (Puppeteer-bundled) | Headless PDF rendering |
 | Pandoc | Native DOCX generation |
-| Puppeteer `^24` | Chrome automation (no bundled Chrome) |
+| Puppeteer `^24` | Chrome automation |
 | marked + highlight.js | Markdown → HTML with syntax highlighting |
 | Express `^5` | HTTP server |
 | Non-root user `inkdown` | Security best-practice |

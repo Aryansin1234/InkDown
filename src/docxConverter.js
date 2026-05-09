@@ -150,10 +150,10 @@ async function convertToDocx(markdown, opts = {}) {
       '--wrap=none',
     ];
 
-    // Native TOC via Lua filter — produces a real Word TOC field
-    // that users can right-click → Update Field to populate.
+    // Table of Contents — use Pandoc's built-in --toc which generates
+    // a pre-populated, clickable TOC with hyperlinks to each heading.
     if (toc) {
-      args.push('--metadata=native-toc:true', '--metadata=toc-depth:4');
+      args.push('--toc', `--toc-depth=${4}`);
     }
 
     // Lua filter for DOCX enhancements (native TOC field, etc.)
