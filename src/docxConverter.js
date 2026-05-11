@@ -18,6 +18,7 @@ const os     = require('os');
 const crypto = require('crypto');
 const { execFile } = require('child_process');
 const { analyze }  = require('./analyzer');
+const { replaceMermaidWithImages, extractMermaidBlocks } = require('./mermaidRenderer');
 
 // ── Helpers ───────────────────────────────────────────────────
 function tmpFile(ext) {
@@ -112,10 +113,29 @@ async function convertToDocx(markdown, opts = {}) {
     skipGridTableConversion: true,
   });
 
-  // 2. Convert pagebreak comments to Pandoc \newpage
-  let finalMd = convertPageBreaks(cleanMd);
+  // 2. Pre-render Mermaid diagrams to PNG images for DOCX embedding
+  //    - High-DPI (2x) for sharp output
+  //    - Source code preserved as HTML comment for editability
+  const mermaidTmpDir = path.join(os.tmpdir(), `inkdown-mermaid-${crypto.randomUUID()}`);
+  let mermaidCleanupDir = null;
 
-  // 3. Build cover page — YAML frontmatter tells Pandoc to generate
+  let processedMd = cleanMd;
+  const mermaidBlocks = extractMermaidBlocks(cleanMd);
+  if (mermaidBlocks.length > 0) {
+    const { markdown: mermaidProcessed, diagramCount } = await replaceMermaidWithImages(
+      cleanMd, mermaidTmpDir, { includeSource: true }
+    );
+    processedMd = mermaidProcessed;
+    mermaidCleanupDir = mermaidTmpDir;
+    if (diagramCount > 0) {
+      console.log(`  ℹ Rendered ${diagramCount} Mermaid diagram(s) for DOCX`);
+    }
+  }
+
+  // 3. Convert pagebreak comments to Pandoc \newpage
+  let finalMd = convertPageBreaks(processedMd);
+
+  // 4. Build cover page — YAML frontmatter tells Pandoc to generate
   //    Title / Author / Date blocks using reference.docx styles.
   //    A \newpage ensures content starts on a fresh page.
   const coverDate = date || new Date().toLocaleDateString('en-US', {
@@ -133,14 +153,14 @@ async function convertToDocx(markdown, opts = {}) {
   yamlLines.push('');
   finalMd = yamlLines.join('\n') + finalMd;
 
-  // 4. Write to temp .md file
+  // 5. Write to temp .md file
   const inputPath  = tmpFile('.md');
   const outputPath = tmpFile('.docx');
 
   try {
     fs.writeFileSync(inputPath, finalMd, 'utf-8');
 
-    // 4. Build Pandoc args
+    // 6. Build Pandoc args
     const pandoc = getPandoc();
     const args = [
       inputPath,
@@ -149,6 +169,11 @@ async function convertToDocx(markdown, opts = {}) {
       '-o', outputPath,
       '--wrap=none',
     ];
+
+    // Resource path — needed so Pandoc can find mermaid PNG images in the temp dir
+    if (mermaidCleanupDir) {
+      args.push(`--resource-path=${mermaidCleanupDir}`);
+    }
 
     // Table of Contents — use Pandoc's built-in --toc which generates
     // a pre-populated, clickable TOC with hyperlinks to each heading.
@@ -175,7 +200,7 @@ async function convertToDocx(markdown, opts = {}) {
     // Syntax highlighting style
     args.push('--highlight-style=tango');
 
-    // 5. Execute Pandoc
+    // 7. Execute Pandoc
     await new Promise((resolve, reject) => {
       execFile(pandoc, args, { timeout: 30000, maxBuffer: 50 * 1024 * 1024 }, (err, stdout, stderr) => {
         if (err) {
@@ -187,13 +212,19 @@ async function convertToDocx(markdown, opts = {}) {
       });
     });
 
-    // 6. Read result
+    // 8. Read result
     const buffer = fs.readFileSync(outputPath);
 
     return { buffer, report };
 
   } finally {
     cleanup(inputPath, outputPath);
+    // Clean up mermaid temp images
+    if (mermaidCleanupDir && fs.existsSync(mermaidCleanupDir)) {
+      try {
+        fs.rmSync(mermaidCleanupDir, { recursive: true, force: true });
+      } catch { /* ignore */ }
+    }
   }
 }
 

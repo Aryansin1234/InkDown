@@ -15,6 +15,7 @@ const { marked } = require('marked');
 const hljs     = require('highlight.js');
 const { analyze } = require('./analyzer');
 const { convertGridTables } = require('./gridTableParser');
+const { renderToSvg, createMermaidPage, extractMermaidBlocks } = require('./mermaidRenderer');
 const markedFootnote = require('marked-footnote');
 const markedKatex = require('marked-katex-extension');
 
@@ -57,14 +58,17 @@ function configureMarked() {
   });
 
   // Syntax-highlight fenced code blocks via highlight.js
+  // Mermaid blocks are left untouched — converted to diagrams via post-processing
   marked.use({
     extensions: [],
     walkTokens(token) {
       if (token.type === 'code') {
         const lang = token.lang ? token.lang.split(/\s/)[0] : '';
+        // Skip mermaid — will be post-processed into diagram divs
+        if (lang.toLowerCase() === 'mermaid') return;
         if (lang && hljs.getLanguage(lang)) {
           token.text = hljs.highlight(token.text, { language: lang }).value;
-          token.escaped = true;        // tell marked the HTML is already safe
+          token.escaped = true;
         } else {
           token.text = hljs.highlightAuto(token.text).value;
           token.escaped = true;
@@ -137,6 +141,10 @@ function buildCoverPage({ title, author, date }) {
   return html;
 }
 
+function hasMermaidBlocks(html) {
+  return html.includes('class="mermaid-diagram"');
+}
+
 function buildHtml({ body, toc, coverPage, autoBreak, title, highlightCss, printCss, katexCss }) {
   const bodyClass = autoBreak ? 'auto-break-h1' : '';
 
@@ -195,6 +203,71 @@ function loadAssets() {
   }
 
   return { highlightCss, printCss, katexCss };
+}
+
+// ── Convert mermaid code blocks to renderable divs ───────────
+/**
+ * After marked produces HTML, mermaid code blocks appear as:
+ *   <pre><code class="language-mermaid">...diagram code...</code></pre>
+ * This function renders them to SVGs using Puppeteer and inlines them:
+ *   <div class="mermaid-diagram">...SVG...</div>
+ */
+async function convertMermaidBlocks(html) {
+  const re = /<pre><code class="language-mermaid">([\s\S]*?)<\/code><\/pre>/gi;
+  const matches = [];
+  let m;
+  while ((m = re.exec(html)) !== null) {
+    const raw = m[1]
+      .replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'");
+    matches.push({ fullMatch: m[0], code: raw });
+  }
+
+  if (matches.length === 0) return html;
+
+  // Launch a browser and create a SINGLE page with mermaid pre-loaded.
+  // Reusing one page avoids repeated CDN fetches that can fail intermittently.
+  const puppeteer = require('puppeteer');
+  const browser = await puppeteer.launch({
+    headless: true,
+    args: ['--no-sandbox', '--disable-setuid-sandbox'],
+  });
+
+  let result = html;
+  try {
+    const mermaidPage = await createMermaidPage(browser);
+
+    for (let i = 0; i < matches.length; i++) {
+      const match = matches[i];
+      console.log(`  🎨 Rendering mermaid diagram ${i + 1}/${matches.length}…`);
+      let svg = await renderToSvg(match.code, mermaidPage);
+      // Retry once on failure
+      if (!svg) {
+        console.log(`  🔄 Retrying diagram ${i + 1}…`);
+        svg = await renderToSvg(match.code, mermaidPage);
+      }
+      if (svg) {
+        result = result.replace(
+          match.fullMatch,
+          `<div class="mermaid-diagram">${svg}</div>`
+        );
+      } else {
+        console.log(`  ⚠ Mermaid diagram ${i + 1} failed to render:`, match.code.slice(0, 60));
+        // Rendering failed — show as styled code block with a warning
+        result = result.replace(
+          match.fullMatch,
+          `<div class="mermaid-diagram mermaid-error"><pre><code>${match.code}</code></pre><p style="color:#cb2431;font-size:12px;">⚠ Mermaid diagram failed to render</p></div>`
+        );
+      }
+    }
+  } finally {
+    await browser.close();
+  }
+
+  return result;
 }
 
 // ── Inline local images as base64 ────────────────────────────
@@ -278,6 +351,9 @@ async function convert(inputPath, outputPath, opts = {}) {
   // Parse Markdown → HTML
   let body = marked.parse(processedMarkdown);
 
+  // Pre-render mermaid code blocks to inline SVGs
+  body = await convertMermaidBlocks(body);
+
   // Inline local images
   body = inlineImages(body, baseDir);
 
@@ -312,7 +388,7 @@ async function convert(inputPath, outputPath, opts = {}) {
   try {
     const page = await browser.newPage();
 
-    // setContent waits for DOM — all CSS is inlined so no network needed
+    // setContent waits for DOM — all content (including mermaid SVGs) is pre-rendered/inlined
     await page.setContent(html, { waitUntil: 'domcontentloaded' });
 
     await page.pdf({

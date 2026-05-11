@@ -29,6 +29,13 @@ app.use(cors({
 // ── Middleware ────────────────────────────────────────────────
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json({ limit: '10mb' }));
+
+// Serve local mermaid.js from node_modules (used by preview iframe)
+app.get('/vendor/mermaid.min.js', (req, res) => {
+  res.setHeader('Content-Type', 'application/javascript');
+  res.setHeader('Cache-Control', 'public, max-age=86400');
+  res.sendFile(path.join(__dirname, 'node_modules', 'mermaid', 'dist', 'mermaid.min.js'));
+});
 app.use(express.urlencoded({ extended: false, limit: '10mb' }));
 
 // ── Helpers ───────────────────────────────────────────────────

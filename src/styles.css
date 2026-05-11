@@ -365,3 +365,27 @@ ul.contains-task-list {
   page-break-inside: avoid;
   break-inside: avoid;
 }
+/* ── Mermaid Diagrams ──────────────────────────────────────── */
+.mermaid-diagram {
+  page-break-inside: avoid;
+  break-inside: avoid;
+  margin: 1.5em 0;
+  text-align: center;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.mermaid-diagram svg {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Mermaid pre block before rendering — hide raw code */
+.mermaid-diagram pre.mermaid {
+  background: transparent;
+  border: none;
+  padding: 0;
+  margin: 0;
+  text-align: center;
+  white-space: pre-wrap;
+}

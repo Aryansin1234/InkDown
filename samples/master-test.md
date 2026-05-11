@@ -1,268 +1,468 @@
-git pu# Master Test Document for InkDown
+# InkDown Master Test Document
 
-<h2 style="color: #2F80ED;">1. HTML Elements & Colored Headings</h2>
-
-This tests whether the converter strips, honors, or ignores raw HTML.
-<p style="color: #27AE60; font-weight: bold;">This paragraph should be green and bold if HTML is supported.</p>
+This document exercises **every** rendering feature for visual QA.
 
 ---
 
-## 2. Typography & Formatting
+## 1. Inline Formatting
 
-Here is standard text with **Bold**, *Italic*, ***Bold Italic***, and ~~Strikethrough~~ text. 
-Here is a test for `inline code` formatting and subscript/superscript if supported: H~2~O, X^2^.
+This is **bold**, *italic*, ***bold-italic***, ~~strikethrough~~, and `inline code`.
 
----
+Here is a [hyperlink](https://example.com) and an auto-link: https://example.com.
 
-## 3. Extended Characters & ASCII/Unicode
-
-* **Symbols:** © ® ™ § ¶ † ‡
-* **Currency:** $ € £ ¥ ¢
-* **Arrows:** ← ↑ → ↓ ↔ ↕
-* **Math:** ∑ ∏ √ ∞ ∫ ≈ ≠ ≤ ≥
-* **Emoji:** 😊 🌍 🚀 🎉 📝 🐛
-* **ASCII Art:**
-```text
-  _____       _    _____                       
- |_   _|     | |  |  __ \                      
-   | |  _ __ | | _| |  | | _____      ___ __   
-   | | | '_ \| |/ / |  | |/ _ \ \ /\ / / '_ \  
-  _| |_| | | |   <| |__| | (_) \ V  V /| | | | 
- |_____|_| |_|_|\_\_____/ \___/ \_/\_/ |_| |_| 
-```
+Superscript: H~2~O and E=mc^2^ (if supported).
 
 ---
 
-## 4. Blockquotes
+## 2. Headings
 
-> This is a standard blockquote.
-> It can span multiple lines.
+### Third Level
+#### Fourth Level
+##### Fifth Level
+###### Sixth Level
+
+---
+
+## 3. Blockquotes
+
+> Single-level blockquote with **bold** inside.
+
+> **Nested blockquotes:**
 >
-> > This is a nested blockquote to see how the styling handles deep nesting.
-> > - List inside a blockquote
-> > - Another item
+> > Second level
+> >
+> > > Third level — still readable?
+
+> **Quote with other elements:**
+>
+> - Bullet inside a quote
+> - Another bullet
+>
+> ```js
+> console.log("code inside a quote");
+> ```
 
 ---
 
-## 5. Lists & Task Lists
+## 4. Lists
 
-### Unordered & Ordered
-1. First item
-2. Second item
-   1. Sub-item A
-   2. Sub-item B
-      - Deeply nested bullet
-      - Deeply nested bullet 2
-3. Third item
+### Unordered
 
-### Task Lists
-- [ ] Implement PDF creation
-- [x] Implement DOCX creation
-- [ ] Validate edge cases
+- Item one
+- Item two
+  - Nested A
+  - Nested B
+    - Deep nested
+- Item three
 
----
+### Ordered
 
-## 6. Tables & Alignments
+1. First
+2. Second
+   1. Sub-first
+   2. Sub-second
+3. Third
 
-| Left-Aligned | Center Aligned | Right Aligned |
-| :---         |     :---:      |          ---: |
-| Row 1 Col 1  |  Row 1 Col 2   |   Row 1 Col 3 |
-| Apple        | Banana         | Cherry        |
-| Long text that might wrap to a new line to test column widths | Short | Medium length |
+### Task List
 
-### Grid Tables
+- [x] Completed task
+- [ ] Incomplete task
+- [x] Another done
+- [ ] Still pending
 
-+---------------+---------------+--------------------+
-| Fruit         | Price         | Advantages         |
-+===============+===============+====================+
-| *Apple*       | $1.00         | - Keeps doc away   |
-|               |               | - Crunchy          |
-+---------------+---------------+--------------------+
-| **Banana**    | $0.50         | - Potassium        |
-|               |               | - Peelable         |
-+---------------+---------------+--------------------+
-
-### Multiline Tables
-
--------------------------------------------------------------
- Centered   Default           Right Left
-  Header    Aligned         Aligned Aligned
------------ ------- --------------- -------------------------
-   First    row                12.0 Example of a row that
-                                    spans multiple lines.
-
-  Second    row                 5.0 Here's another one. Note
-                                    the blank line between
-                                    rows.
--------------------------------------------------------------
-
----
-
-## 7. Code Blocks
-
-Testing multiline code blocks with syntax highlighting (if supported):
-
-```javascript
-// A simple Express route
-const express = require('express');
-const app = express();
-
-app.get('/test', (req, res) => {
-    res.json({ message: "Hello, world!" });
-});
-```
-
-```python
-# A simple Python script
-def calculate_fibonacci(n):
-    if n <= 1: return n
-    return calculate_fibonacci(n-1) + calculate_fibonacci(n-2)
-```
-
----
-
-## 8. Images and Links
-
-* **Absolute Link:** [Visit Google](https://www.google.com)
-* **Image (External):** 
-![Placeholder Image](https://via.placeholder.com/400x150/000000/FFFFFF/?text=Test+Image)
-
----
-
-## 9. Page Breaks (Page 1 ends here)
-
-The following HTML div should forcefully break the page in PDF output.
-
-<div style="page-break-after: always; break-after: page;"></div>
-
-## 10. Page 2 - Long Text & Text Wrapping
-
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
-
-*Repeated to force line wrapping and potentially natural page breaks if this document gets very long...*
-
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
-
-*Repeated enough times to trigger a natural page break...*
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
-
----
-
-<div style="page-break-after: always; break-after: page;"></div>
-
-## 11. Page 3 - Flowing Tables & Large Elements
-
-When tables or elements possess multiple rows, they should correctly break across pages rather than cut off midway. 
-
-| Item # | Description | Quantity | Price |
-|---|---|---|---|
-| 1 | Test Item A | 100 | $10.00 |
-| 2 | Test Item B | 200 | $20.00 |
-| 3 | Test Item C | 300 | $30.00 |
-| 4 | Test Item D | 400 | $40.00 |
-| 5 | Test Item E | 500 | $50.00 |
-| 6 | Test Item F | 600 | $60.00 |
-| 7 | Test Item G | 700 | $70.00 |
-| 8 | Test Item H | 800 | $80.00 |
-| 9 | Test Item I | 900 | $90.00 |
-| 10 | Test Item J | 1000 | $100.00 |
-
-Here is a large blockquote meant to stretch down the page layout:
-
-> "The true test of a PDF generator is not just how it renders a basic paragraph, but how gracefully it fails when confronted with overlapping constraints, extreme margins, and page-breaking logic that spans across multiple dimensions of HTML to PDF translations. 
-> 
-> We must ensure that widow and orphan properties inside the CSS are properly configured and respected by the browser rendering engine, otherwise text that should be kept together will be unceremoniously split across printing mediums."
-
-<br/><br/><br/><br/><br/><br/><br/><br/><br/>
-*(Testing massive vertical spacing properties)*
-
-<div style="page-break-after: always; break-after: page;"></div>
-
-## 12. Page 4 - Final Validations
-
-This concludes the master test for multi-page document generation. There should be at minimum 4 distinct pages in the output document. Check the following:
-1. Did the 1st page break right before the 'Page 2' section?
-2. Did the natural page wrapping on Page 2 push text seamlessly to a third page if it ran long?
-3. Did the explicit break before Page 3 (Tables) work correctly?
-4. Are headers, footers, or margins cutting off any text?
-
-### End of Master Test Document
-
----
-
-## 13. Footnotes
-
-This paragraph has a footnote[^1] and another one[^longnote].
-
-[^1]: This is the first footnote — it should appear at the bottom of the document.
-
-[^longnote]: Here's a longer footnote with multiple paragraphs.
-
-    Subsequent paragraphs are indented to show they belong to the previous footnote.
-
-    This tests Pandoc's native footnote/endnote rendering in DOCX.
-
----
-
-## 14. Math Equations
-
-Inline math: The quadratic formula is $x = \frac{-b \pm \sqrt{b^2-4ac}}{2a}$.
-
-Block math (display mode):
-
-$$
-\int_{-\infty}^{\infty} e^{-x^2} dx = \sqrt{\pi}
-$$
-
-Einstein's famous equation: $E = mc^2$
-
-The Pythagorean theorem: $a^2 + b^2 = c^2$
-
----
-
-## 15. Definition Lists
+### Definition-style (if supported)
 
 Term 1
-:   Definition for term 1. This tests Pandoc's definition list extension.
+: Definition of term 1
 
 Term 2
-:   First definition for term 2.
-:   Second definition for term 2 — terms can have multiple definitions.
-
-Markdown
-:   A lightweight markup language for creating formatted text using a plain-text editor.
-
-InkDown
-:   A tool that converts Markdown to pixel-perfect PDF and DOCX documents with syntax highlighting, smart tables, and a REST API.
+: Definition of term 2
 
 ---
 
-## 16. Figures with Captions
+## 5. Code Blocks
 
-The following image should become a proper Word figure with a caption:
+### JavaScript
 
-![This is a figure caption — it should appear below the image in Word](https://via.placeholder.com/600x200/24292E/FFFFFF/?text=Figure+with+Caption)
+```js
+function greet(name) {
+  const msg = `Hello, ${name}!`;
+  console.log(msg);
+  return msg;
+}
+
+// Arrow function
+const add = (a, b) => a + b;
+```
+
+### Python
+
+```python
+from pathlib import Path
+
+def convert(src: Path, dst: Path) -> None:
+    """Convert markdown to PDF."""
+    content = src.read_text(encoding="utf-8")
+    # process...
+    dst.write_bytes(result)
+```
+
+### Bash
+
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+
+for f in *.md; do
+  echo "Converting $f …"
+  inkdown convert "$f" --format pdf
+done
+```
+
+### JSON
+
+```json
+{
+  "name": "inkdown",
+  "version": "1.1.0",
+  "scripts": {
+    "dev": "node server.js",
+    "test": "node scripts/test-16.js"
+  }
+}
+```
+
+### Plain / no language
+
+```
+This is a fenced code block
+with no language specified.
+    Indentation preserved.
+```
+
+### Indented code block (4 spaces)
+
+    This is an indented code block.
+    It should render as code as well.
 
 ---
 
-## 17. Feature Parity Checklist
+## 6. Tables
 
-| Feature | PDF | DOCX | Notes |
-|---------|-----|------|-------|
-| Cover page | ✅ | ✅ | Title, author, date |
-| Table of Contents | ✅ | ✅ | Native Word TOC field |
-| Header / Footer | ✅ | ✅ | Title + Page X/Y |
-| Page numbers | ✅ | ✅ | Footer right-aligned |
-| Code block styling | ✅ | ✅ | Gray bg, border, Consolas |
-| Inline code styling | ✅ | ✅ | Gray bg, monospace |
-| Table borders | ✅ | ✅ | #E1E4E8, header shading |
-| Grid tables | ✅ | ✅ | Pandoc native |
-| Footnotes | ✅ | ✅ | Pandoc native endnotes |
-| Math equations | ✅ | ✅ | Native Word OMML |
-| Definition lists | ✅ | ✅ | Pandoc extension |
-| Figure captions | ✅ | ✅ | implicit_figures |
-| Page breaks | ✅ | ✅ | \newpage |
-| Syntax highlighting | ✅ | ✅ | 190+ languages |
+### Simple Table
+
+| Feature       | PDF | DOCX |
+|---------------|-----|------|
+| Headings      | ✅  | ✅   |
+| Tables        | ✅  | ✅   |
+| Mermaid       | ✅  | ✅   |
+| Grid Tables   | ✅  | ✅   |
+| Cover Page    | ✅  | ❌   |
+
+### Aligned Columns
+
+| Left         | Center       | Right        |
+|:-------------|:------------:|-------------:|
+| left-aligned | centered     | right-aligned|
+| data         | data         | 1,234.56     |
+| more         | more         | 99.9         |
+
+### Wide Table
+
+| Col 1 | Col 2 | Col 3 | Col 4 | Col 5 | Col 6 | Col 7 | Col 8 |
+|-------|-------|-------|-------|-------|-------|-------|-------|
+| A1    | B1    | C1    | D1    | E1    | F1    | G1    | H1    |
+| A2    | B2    | C2    | D2    | E2    | F2    | G2    | H2    |
+
+### Table with Inline Formatting
+
+| Name       | Description                          |
+|------------|--------------------------------------|
+| **Bold**   | This cell has `code` and *italics*   |
+| ~~Strike~~ | [Link](https://example.com) in cell  |
+
+---
+
+## 7. Horizontal Rules
+
+Above the rule.
+
+---
+
+***
+
+___
+
+Below the rules.
+
+---
+
+## 8. Images
+
+![Placeholder image](https://via.placeholder.com/400x200?text=InkDown+Test)
+
+---
+
+## 9. HTML (raw)
+
+<details>
+<summary>Click to expand</summary>
+
+This is inside a `<details>` block.
+
+- Works in browsers
+- May not render in PDF
+
+</details>
+
+<div style="background:#f0f0f0; padding:10px; border-radius:6px;">
+  <strong>Styled HTML box</strong> — does this render?
+</div>
+
+---
+
+## 10. Footnotes (if supported)
+
+Here is a sentence with a footnote.[^1]
+
+And another.[^note]
+
+[^1]: This is the first footnote.
+[^note]: This is a named footnote with **bold** text.
+
+---
+
+## 11. Math (KaTeX / LaTeX)
+
+Inline math: $E = mc^2$
+
+Block math:
+
+$$
+\int_{0}^{\infty} e^{-x^2} \, dx = \frac{\sqrt{\pi}}{2}
+$$
+
+$$
+\sum_{n=1}^{\infty} \frac{1}{n^2} = \frac{\pi^2}{6}
+$$
+
+---
+
+## 12. Mermaid Diagrams
+
+### 12.1 Flowchart (TD)
+
+```mermaid
+graph TD
+    A[Start] --> B{Is it working?}
+    B -->|Yes| C[Ship it!]
+    B -->|No| D[Debug]
+    D --> E[Check logs]
+    E --> B
+    C --> F[Done]
+```
+
+### 12.2 Flowchart (LR)
+
+```mermaid
+graph LR
+    A[Input MD] --> B[Analyzer]
+    B --> C[Heading Fix]
+    B --> D[ASCII Art Detect]
+    B --> E[Auto Breaks]
+    C --> F[Remark Stringify]
+    D --> F
+    E --> F
+    F --> G{Format?}
+    G -->|PDF| H[Puppeteer]
+    G -->|DOCX| I[Pandoc]
+    H --> J[PDF File]
+    I --> K[DOCX File]
+```
+
+### 12.3 Sequence Diagram
+
+```mermaid
+sequenceDiagram
+    actor User
+    participant UI as Web UI
+    participant API as InkDown API
+    User->>UI: Paste Markdown
+    UI->>API: POST /api/convert
+    API-->>UI: PDF download
+    UI-->>User: Save file
+```
+
+### 12.4 Class Diagram
+
+```mermaid
+classDiagram
+    class Converter {
+        +convert(input, output, opts)
+        -buildHtml(body, toc, cover)
+    }
+    class Analyzer {
+        +analyze(markdown, opts)
+    }
+    Converter --> Analyzer : uses
+```
+
+### 12.5 State Diagram
+
+```mermaid
+stateDiagram-v2
+    [*] --> Idle
+    Idle --> Parsing : Upload / Paste
+    Parsing --> Analyzing : Markdown received
+    Analyzing --> Converting : Analysis complete
+    Converting --> Rendering : HTML built
+    Rendering --> Done : PDF/DOCX ready
+    Done --> Idle : New document
+    Analyzing --> Error : Invalid input
+    Converting --> Error : Pandoc/Puppeteer fail
+    Error --> Idle : Retry
+```
+
+### 12.6 ER Diagram
+
+```mermaid
+erDiagram
+    USER ||--o{ DOCUMENT : uploads
+    DOCUMENT ||--|{ CONVERSION : triggers
+    CONVERSION {
+        string id PK
+        string format
+        string status
+    }
+```
+
+### 12.7 Gantt Chart
+
+```mermaid
+gantt
+    title InkDown Development Roadmap
+    dateFormat YYYY-MM-DD
+    section Core
+        PDF Converter       :done, pdf, 2025-01-01, 2025-02-15
+        DOCX Converter      :done, docx, 2025-02-01, 2025-03-15
+    section Features
+        Grid Tables         :done, grid, 2025-04-01, 2025-04-20
+        Mermaid Diagrams    :active, merm, 2025-05-01, 2025-06-01
+```
+
+### 12.8 Pie Chart
+
+```mermaid
+pie title Output Format Usage
+    "PDF" : 62
+    "DOCX" : 31
+    "Preview Only" : 7
+```
+
+### 12.9 Git Graph
+
+```mermaid
+gitGraph
+    commit id: "init"
+    commit id: "add converter"
+    branch feature/docx
+    checkout feature/docx
+    commit id: "pandoc integration"
+    commit id: "reference.docx"
+    checkout main
+    commit id: "analyzer v1"
+    merge feature/docx
+    branch feature/mermaid
+    checkout feature/mermaid
+    commit id: "mermaidRenderer"
+    commit id: "PDF support"
+    commit id: "DOCX support"
+    checkout main
+    merge feature/mermaid
+    commit id: "release v1.1"
+```
+
+### 12.10 Mindmap
+
+```mermaid
+mindmap
+  root((InkDown))
+    Input
+      Editor
+      File Upload
+      CLI
+    Processing
+      Analyzer
+      Grid Tables
+      Mermaid
+    Output
+      PDF
+      DOCX
+```
+
+---
+
+## 13. Nested / Mixed Content
+
+> ### Quote with a Table
+>
+> | A | B |
+> |---|---|
+> | 1 | 2 |
+>
+> And a code block:
+>
+> ```python
+> print("inside a quote")
+> ```
+
+### List with Code and Tables
+
+1. First, run the install:
+
+   ```bash
+   npm install
+   ```
+
+2. Then check the config:
+
+   | Key      | Value       |
+   |----------|-------------|
+   | format   | pdf         |
+   | toc      | true        |
+
+3. Finally convert:
+
+   ```bash
+   node server.js
+   ```
+
+---
+
+## 14. Long Paragraph (Wrapping Test)
+
+Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Cras justo odio, dapibus ac facilisis in, egestas eget quam. Donec id elit non mi porta gravida at eget metus. Nullam quis risus eget urna mollis ornare vel eu leo.
+
+---
+
+## 15. Special Characters & Emoji
+
+Arrows: → ← ↑ ↓ ↔ ⇒ ⇐  
+Symbols: © ® ™ § ¶ † ‡ • ° ± ÷ × ≈ ≠ ≤ ≥  
+Emoji: 🚀 📄 ✅ ❌ ⚡ 🎨 🔧 📦  
+Quotes: "curly doubles" 'curly singles' «guillemets»  
+Dashes: en–dash em—dash  
+
+---
+
+## 16. Page Break Handling
+
+Content before the break.
+
+<div style="page-break-after: always;"></div>
+
+Content after the break — this should start on a new page in PDF.
+
+---
+
+*End of master test document.*

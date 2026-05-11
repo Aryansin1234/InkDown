@@ -148,6 +148,8 @@ function remarkDetectAsciiArt() {
   return (tree, file) => {
     const asciiBlocks = [];
     visit(tree, 'code', (node) => {
+      // Never strip lang from mermaid blocks — they need the tag for rendering
+      if (node.lang && node.lang.toLowerCase() === 'mermaid') return;
       if (isAsciiArt(node.value)) {
         // Mark as ascii art — downstream renderers should use literal/verbatim
         node.data = node.data || {};

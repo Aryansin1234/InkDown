@@ -21,6 +21,7 @@
     "marked": "^13.0.0",
     "marked-footnote": "^1.4.0",
     "marked-katex-extension": "^5.1.8",
+    "mermaid": "^11.14.0",
     "multer": "^2.1.1",
     "node-fetch": "^3.3.2",
     "puppeteer": "^24.40.0",

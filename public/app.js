@@ -52,6 +52,16 @@ async function fetchData(url) {
 | Images        | ✅ Done | base64 inlined            |
 | Page breaks   | ✅ Done | manual & auto             |
 
+## Mermaid Diagram
+
+\`\`\`mermaid
+graph TD
+    A[Start] --> B{Is it working?}
+    B -->|Yes| C[Great!]
+    B -->|No| D[Debug]
+    D --> B
+\`\`\`
+
 ## Blockquote
 
 > "Great documentation is half the product."
@@ -574,6 +584,13 @@ function insertMarkdown(action) {
       selLen = 0;
       break;
     }
+    case 'mermaid': {
+      const text = sel || 'graph TD\n    A[Start] --> B{Decision}\n    B -->|Yes| C[OK]\n    B -->|No| D[End]';
+      insert = `\`\`\`mermaid\n${text}\n\`\`\``;
+      cursorOffset = 12;
+      selLen = text.length;
+      break;
+    }
     default:
       return;
   }
@@ -611,11 +628,41 @@ function renderPreview(markdown) {
     html = `<pre>${escHtml(markdown)}</pre>`;
   }
 
+  // Convert mermaid code blocks from marked's output format
+  //   <pre><code class="language-mermaid">...code...</code></pre>
+  // into the format mermaid.js expects:
+  //   <div class="mermaid">...code...</div>
+  html = html.replace(
+    /<pre><code\s+class=["']language-mermaid["']>([\s\S]*?)<\/code><\/pre>/gi,
+    (match, code) => {
+      const raw = code
+        .replace(/&amp;/g, '&')
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&quot;/g, '"')
+        .replace(/&#39;/g, "'");
+      return `<div class="mermaid">${raw}</div>`;
+    }
+  );
+
+  const hasMermaid = html.includes('class="mermaid"');
+
   const doc = `<!DOCTYPE html>
 <html>
 <head>
 <meta charset="UTF-8">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11/styles/github.min.css">
+${hasMermaid ? `<script src="/vendor/mermaid.min.js"></script>
+<script>
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'default',
+    securityLevel: 'loose',
+    flowchart: { useMaxWidth: true, htmlLabels: true },
+    sequence: { useMaxWidth: true },
+    gitGraph: { useMaxWidth: true },
+  });
+</script>` : ''}
 <style>
   body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
@@ -662,9 +709,11 @@ function renderPreview(markdown) {
   hr  { height: 2px; background: #e1e4e8; border: none; margin: 1.5em 0; }
   ul, ol { padding-left: 2em; margin: 0 0 1em; }
   li { margin-bottom: 0.3em; }
+  .mermaid { text-align: center; margin: 1em 0; }
 </style>
 </head>
-<body>${html}</body>
+<body>${html}
+</body>
 </html>`;
 
   const frame = el.previewFrame;
