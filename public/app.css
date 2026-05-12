@@ -1542,14 +1542,14 @@ code {
   background-clip: text;
 }
 .step-content h3 {
-  font-size: 16px;
+  font-size: 19px;
   font-weight: 600;
   color: var(--text-primary);
-  margin-bottom: 6px;
+  margin-bottom: 8px;
   letter-spacing: 0.2px;
 }
 .step-content p {
-  font-size: 14px;
+  font-size: 15.5px;
   font-weight: 400;
   color: var(--text-secondary);
   line-height: 1.65;
@@ -1610,17 +1610,17 @@ code {
 }
 
 .feature-title {
-  font-size: 14px;
+  font-size: 17px;
   font-weight: 600;
   color: var(--text-primary);
   letter-spacing: 0.2px;
-  margin-bottom: 3px;
+  margin-bottom: 5px;
 }
 .feature-desc {
-  font-size: 12.5px;
+  font-size: 14.5px;
   font-weight: 400;
   color: var(--text-secondary);
-  line-height: 1.55;
+  line-height: 1.6;
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -1959,8 +1959,8 @@ code {
   .features-grid { grid-template-columns: 1fr; gap: 6px; }
   .feature-row { padding: 12px 14px; gap: 12px; }
   .feature-icon { width: 30px; height: 30px; }
-  .feature-title { font-size: 13px; }
-  .feature-desc { font-size: 12px; }
+  .feature-title { font-size: 15px; }
+  .feature-desc { font-size: 13.5px; }
 
   /* Converter panel */
   .panel-tabs { overflow-x: auto; -webkit-overflow-scrolling: touch; padding: var(--space-sm) var(--space-sm) 0; }
@@ -2007,9 +2007,9 @@ code {
   .format-card-desc { font-size: 9px; }
 
   /* Steps */
-  .step-number { font-size: 28px; }
-  .step-content h3 { font-size: 14px; }
-  .step-content p { font-size: 13px; }
+  .step-number { font-size: 32px; }
+  .step-content h3 { font-size: 16px; }
+  .step-content p { font-size: 14.5px; }
 
   /* Toast */
   .toast-container { left: 12px; right: 12px; bottom: var(--space-md); }

@@ -173,7 +173,7 @@ async function renderToSvg(code, browserOrPage) {
  * @returns {Promise<Buffer>} PNG image buffer
  */
 async function renderToPng(code, opts = {}) {
-  const { scale = 2, browser: existingBrowser } = opts;
+  const { scale = 2, browser: existingBrowser, maxWidth = 680 } = opts;
 
   const ownBrowser = !existingBrowser;
   const browser = existingBrowser || await puppeteer.launch({
@@ -183,16 +183,25 @@ async function renderToPng(code, opts = {}) {
 
   try {
     const page = await browser.newPage();
-    await page.setViewport({ width: 1200, height: 800, deviceScaleFactor: scale });
+    // Use a viewport width that matches DOCX usable page width (~6.5in = ~650px)
+    // plus small margin, so diagrams fit without cropping
+    await page.setViewport({ width: maxWidth, height: 800, deviceScaleFactor: scale });
 
-    // Use locally bundled mermaid.js source — no network needed
     const mermaidSrc = getMermaidSource();
 
     await page.setContent(`<!DOCTYPE html>
 <html><head>
 <style>
-  body { margin: 0; padding: 20px; background: white; display: inline-block; }
-  #container { display: inline-block; }
+  body { margin: 0; padding: 10px; background: white; }
+  #container {
+    width: 100%;
+    max-width: ${maxWidth - 20}px;
+    overflow: visible;
+  }
+  #container svg {
+    max-width: 100% !important;
+    height: auto !important;
+  }
 </style>
 </head>
 <body>
@@ -201,21 +210,43 @@ async function renderToPng(code, opts = {}) {
 
     await page.addScriptTag({ content: mermaidSrc });
 
-    await page.evaluate(() => {
+    // Use useMaxWidth: true so diagrams constrain to the container width
+    await page.evaluate((containerWidth) => {
       mermaid.initialize({
         startOnLoad: false,
         theme: 'default',
         securityLevel: 'loose',
-        flowchart: { useMaxWidth: false, htmlLabels: true },
-        sequence: { useMaxWidth: false },
-        gitGraph: { useMaxWidth: false },
+        flowchart:  { useMaxWidth: true, htmlLabels: true },
+        sequence:   { useMaxWidth: true },
+        gitGraph:   { useMaxWidth: true },
+        er:         { useMaxWidth: true, layoutDirection: 'TB',
+                      fontSize: 10, entityPadding: 10,
+                      minEntityWidth: 80, minEntityHeight: 40 },
+        gantt:      { useMaxWidth: true, fontSize: 11, barHeight: 24, barGap: 6,
+                      sectionFontSize: 12, numberSectionStyles: 4,
+                      leftPadding: 80 },
       });
-    });
+    }, maxWidth - 20);
 
     const rendered = await page.evaluate(async (diagramCode) => {
       try {
         const { svg } = await mermaid.render('mermaid-diagram', diagramCode);
         document.getElementById('container').innerHTML = svg;
+
+        // Force the SVG to fit within container
+        const svgEl = document.querySelector('#container svg');
+        if (svgEl) {
+          svgEl.style.maxWidth = '100%';
+          svgEl.style.height = 'auto';
+          svgEl.style.width = '100%';
+
+          // For ER diagrams, scale down further to prevent overflow
+          const isER = diagramCode.trim().toLowerCase().startsWith('erdiagram');
+          if (isER) {
+            svgEl.style.transform = 'scale(0.75)';
+            svgEl.style.transformOrigin = 'top left';
+          }
+        }
         return true;
       } catch (e) {
         return false;
@@ -227,16 +258,19 @@ async function renderToPng(code, opts = {}) {
       return null;
     }
 
+    // Wait briefly for any reflow
+    await new Promise(r => setTimeout(r, 100));
+
     // Clip to the diagram bounding box
     const clip = await page.evaluate(() => {
       const el = document.querySelector('#container svg');
       if (!el) return null;
       const rect = el.getBoundingClientRect();
       return {
-        x: Math.max(0, rect.x - 10),
-        y: Math.max(0, rect.y - 10),
-        width: rect.width + 20,
-        height: rect.height + 20,
+        x: Math.max(0, rect.x - 5),
+        y: Math.max(0, rect.y - 5),
+        width: Math.min(rect.width + 10, window.innerWidth),
+        height: rect.height + 10,
       };
     });
 
