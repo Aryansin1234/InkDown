@@ -88,7 +88,7 @@ async function createMermaidPage(browser) {
     typeof mermaid !== 'undefined' && typeof mermaid.render === 'function'
   );
   if (!mermaidLoaded) {
-    throw new Error('Mermaid library failed to load from CDN');
+    throw new Error('Mermaid library failed to load from local node_modules');
   }
 
   return page;

@@ -14,5 +14,5 @@ function Table(tbl)
     '<w:tblLook w:val="04A0" w:firstRow="1" w:lastRow="0" w:firstColumn="0" w:lastColumn="0" w:noHBand="0" w:noVBand="1"/>' ..
     '</w:tblPr>')
 
-  return { raw_open, tbl }
+  return pandoc.Blocks({ raw_open, tbl })
 end

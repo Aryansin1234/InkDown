@@ -6,13 +6,24 @@ const os           = require('os');
 const fs           = require('fs');
 const path         = require('path');
 const crypto       = require('crypto');
-const fetch        = require('node-fetch');
 const cors         = require('cors');
 const { convert }       = require('./src/converter');
 const { convertToDocx } = require('./src/docxConverter');
 
 const app    = express();
-const upload = multer({ dest: os.tmpdir() });
+const upload = multer({
+  dest: os.tmpdir(),
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10 MB max
+  fileFilter: (_req, file, cb) => {
+    const allowed = ['.md', '.markdown', '.txt', '.text', '.mdown', '.mkd'];
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (allowed.includes(ext) || file.mimetype === 'text/markdown' || file.mimetype === 'text/plain') {
+      cb(null, true);
+    } else {
+      cb(new Error('Only Markdown files are accepted'), false);
+    }
+  },
+});
 
 // ── CORS ──────────────────────────────────────────────────────
 const corsOrigins = process.env.INKDOWN_CORS_ORIGINS
@@ -200,11 +211,13 @@ async function handleConvert(req, res) {
 
       const stream = fs.createReadStream(outputPath);
       stream.pipe(res);
-      stream.on('end',   () => cleanup(ownInput ? inputPath : null, outputPath));
+      const doCleanup = () => cleanup(ownInput ? inputPath : null, outputPath);
+      stream.on('end', doCleanup);
       stream.on('error', (err) => {
-        cleanup(ownInput ? inputPath : null, outputPath);
+        doCleanup();
         if (!res.headersSent) res.status(500).json({ error: err.message, code: 'CONVERSION_ERROR' });
       });
+      res.on('close', () => { stream.destroy(); doCleanup(); });
     }
 
   } catch (err) {

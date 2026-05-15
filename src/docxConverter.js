@@ -179,12 +179,20 @@ async function convertToDocx(markdown, opts = {}) {
     // a pre-populated, clickable TOC with hyperlinks to each heading.
     if (toc) {
       args.push('--toc', `--toc-depth=${4}`);
+      // Enable native Word TOC field via Lua filter
+      args.push('--metadata=native-toc:true', '--metadata=toc-depth:4');
     }
 
     // Lua filter for DOCX enhancements (native TOC field, etc.)
     const luaFilter = path.join(__dirname, 'docx-enhancements.lua');
     if (fs.existsSync(luaFilter)) {
       args.push(`--lua-filter=${luaFilter}`);
+    }
+
+    // Lua filter for DOCX table styling (borders, header shading)
+    const tableStyleFilter = path.join(__dirname, 'docx-table-style.lua');
+    if (fs.existsSync(tableStyleFilter)) {
+      args.push(`--lua-filter=${tableStyleFilter}`);
     }
 
     // Reference template (custom styles, header/footer, margins)

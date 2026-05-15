@@ -332,7 +332,7 @@ async function convert(inputPath, outputPath, opts = {}) {
   const rawMarkdown = fs.readFileSync(absInput, 'utf-8');
   const { highlightCss, printCss, katexCss } = loadAssets();
 
-  // Smart analysis pass — normalize headings, detect issues
+  // Smart analysis pass — normalize headings, detect issues, convert grid tables
   const { markdown, report } = await analyze(rawMarkdown, {
     autoBreak,
     fixHeadings: true,
@@ -345,11 +345,8 @@ async function convert(inputPath, outputPath, opts = {}) {
     console.log(`  ℹ Detected ${report.asciiArtBlocks.length} ASCII art block(s)`);
   }
 
-  // Pre-process grid & multiline tables into HTML
-  const processedMarkdown = convertGridTables(markdown);
-
-  // Parse Markdown → HTML
-  let body = marked.parse(processedMarkdown);
+  // Parse Markdown → HTML (grid tables already converted by analyze())
+  let body = marked.parse(markdown);
 
   // Pre-render mermaid code blocks to inline SVGs
   body = await convertMermaidBlocks(body);
@@ -363,10 +360,7 @@ async function convert(inputPath, outputPath, opts = {}) {
   // Build cover page
   const coverPage = buildCoverPage({ title: docTitle, author });
 
-  // Inline KaTeX CSS directly into the document
-  const katexStyle = katexCss ? `<style>${katexCss}</style>` : '';
-
-  // Assemble full HTML document
+  // Assemble full HTML document (KaTeX CSS inlined into printCss)
   const html = buildHtml({ body, toc: tocHtml, coverPage, autoBreak, title: docTitle, highlightCss, printCss: printCss + '\n' + (katexCss || ''), katexCss: '' });
 
   // Launch Puppeteer and render PDF
@@ -381,15 +375,14 @@ async function convert(inputPath, outputPath, opts = {}) {
       '--disable-extensions',
       '--disable-crash-reporter',
       '--disable-breakpad',
-      '--single-process',
     ],
   });
 
   try {
     const page = await browser.newPage();
 
-    // setContent waits for DOM — all content (including mermaid SVGs) is pre-rendered/inlined
-    await page.setContent(html, { waitUntil: 'domcontentloaded' });
+    // setContent waits for all resources — ensures KaTeX fonts/CSS and mermaid SVGs are ready
+    await page.setContent(html, { waitUntil: 'networkidle0' });
 
     await page.pdf({
       path:            absOutput,

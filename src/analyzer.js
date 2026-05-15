@@ -191,14 +191,12 @@ function remarkAutoPageBreaks(options = {}) {
       }
     }
 
-    // Insert in reverse to maintain indices
-    let inserted = 0;
-    for (const idx of insertions) {
-      tree.children.splice(idx + inserted, 0, {
+    // Insert in reverse to maintain correct indices
+    for (let i = insertions.length - 1; i >= 0; i--) {
+      tree.children.splice(insertions[i], 0, {
         type: 'html',
         value: '<!-- pagebreak -->',
       });
-      inserted++;
     }
 
     if (insertions.length) {

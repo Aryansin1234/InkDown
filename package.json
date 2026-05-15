@@ -10,8 +10,8 @@
     "dev": "node server.js",
     "start": "node server.js",
     "convert": "node src/cli.js",
-    "test": "node src/cli.js samples/test.md output/test.pdf",
-    "test:docx": "node src/cli.js --format docx samples/test.md output/test.docx"
+    "test": "node src/cli.js samples/master-test.md output/test.pdf",
+    "test:docx": "node src/cli.js --format docx samples/master-test.md output/test.docx"
   },
   "dependencies": {
     "cors": "^2.8.6",
@@ -23,12 +23,11 @@
     "marked-katex-extension": "^5.1.8",
     "mermaid": "^11.14.0",
     "multer": "^2.1.1",
-    "node-fetch": "^3.3.2",
     "puppeteer": "^24.40.0",
-    "remark-gfm": "^4.0.1",
-    "remark-parse": "^11.0.0",
-    "remark-stringify": "^11.0.0",
-    "unified": "^11.0.5"
+    "remark-gfm": "^3.0.1",
+    "remark-parse": "^10.0.2",
+    "remark-stringify": "^10.0.3",
+    "unified": "^10.1.2"
   },
   "engines": {
     "node": ">=18.0.0"
