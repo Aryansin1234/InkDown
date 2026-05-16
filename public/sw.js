@@ -1,9 +1,9 @@
-const CACHE_NAME = 'inkdown-v3';
+const CACHE_NAME = 'inkdown-v6';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
   '/app.css',
-  '/app.js',
+  '/app.js?v=3',
   '/manifest.json',
   '/icons/icon-192.png',
   '/icons/icon-512.png',

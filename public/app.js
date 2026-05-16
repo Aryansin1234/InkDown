@@ -946,6 +946,40 @@ async function handleConvert() {
   if (state.options.title) fd.append('title', state.options.title);
 
   try {
+    // For DOCX: use a hidden form POST so the browser handles the binary
+    // download natively — avoids fetch/blob encoding corruption issues.
+    // For PDF: also use native form to keep behaviour consistent.
+    if (state.mode !== 'upload') {
+      // Text/URL mode: submit via hidden form
+      const hiddenForm = document.createElement('form');
+      hiddenForm.method = 'POST';
+      hiddenForm.action = '/api/convert';
+      hiddenForm.style.display = 'none';
+
+      // Copy FormData entries into hidden inputs
+      for (const [key, value] of fd.entries()) {
+        if (typeof value === 'string') {
+          const input = document.createElement('input');
+          input.type = 'hidden';
+          input.name = key;
+          input.value = value;
+          hiddenForm.appendChild(input);
+        }
+      }
+
+      document.body.appendChild(hiddenForm);
+      hiddenForm.submit();
+      document.body.removeChild(hiddenForm);
+
+      // Form submission triggers native browser download
+      setTimeout(() => {
+        showToast('Document download started!', 'success');
+        setLoading(false);
+      }, 2000);
+      return;
+    }
+
+    // File upload mode: must use fetch (can't put File in hidden form)
     const resp = await fetch('/api/convert', { method: 'POST', body: fd });
 
     if (!resp.ok) {
@@ -966,8 +1000,12 @@ async function handleConvert() {
       if (m) filename = m[1];
     }
 
-    // Trigger browser download
-    const blob = await resp.blob();
+    // Use XHR-style download for file uploads
+    const arrayBuf = await resp.arrayBuffer();
+    const mimeType = ext === 'docx'
+      ? 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+      : 'application/pdf';
+    const blob = new Blob([arrayBuf], { type: mimeType });
     const url  = URL.createObjectURL(blob);
     const a    = document.createElement('a');
     a.href     = url;
@@ -975,7 +1013,7 @@ async function handleConvert() {
     document.body.appendChild(a);
     a.click();
     a.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 5000);
+    setTimeout(() => URL.revokeObjectURL(url), 10000);
 
     showToast(`${filename} downloaded!`, 'success');
   } catch (err) {

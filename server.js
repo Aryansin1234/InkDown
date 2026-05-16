@@ -196,11 +196,19 @@ async function handleConvert(req, res) {
         numberSections: opts.numberSections,
       });
 
+      // Write buffer to a temp file, then serve it via sendFile
+      // (avoids Express/Node encoding issues with in-memory binary buffers)
+      const docxTmp = tmpFile('.docx');
+      fs.writeFileSync(docxTmp, buffer);
+
       const filename = `${baseName}.docx`;
       res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
-      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
-      res.send(buffer);
-      cleanup(ownInput ? inputPath : null);
+      res.download(docxTmp, filename, (err) => {
+        cleanup(docxTmp, ownInput ? inputPath : null);
+        if (err && !res.headersSent) {
+          res.status(500).json({ error: err.message, code: 'CONVERSION_ERROR' });
+        }
+      });
     } else {
       outputPath = tmpFile('.pdf');
       await convert(inputPath, outputPath, opts);

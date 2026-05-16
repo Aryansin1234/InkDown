@@ -381,8 +381,11 @@ async function convert(inputPath, outputPath, opts = {}) {
   try {
     const page = await browser.newPage();
 
-    // setContent waits for all resources — ensures KaTeX fonts/CSS and mermaid SVGs are ready
-    await page.setContent(html, { waitUntil: 'networkidle0' });
+    // setContent waits for DOM ready — networkidle0 can timeout if CDN resources are slow
+    await page.setContent(html, { waitUntil: 'domcontentloaded', timeout: 15000 });
+
+    // Give external resources (KaTeX fonts, highlight.js) a moment to load
+    await new Promise(r => setTimeout(r, 1500));
 
     await page.pdf({
       path:            absOutput,

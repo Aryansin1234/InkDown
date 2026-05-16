@@ -19,6 +19,17 @@ docker run -p 3000:3000 aryansin1234/inkdown:latest
 
 Then open **http://localhost:3000** — that's it.
 
+> **🍎 Apple Silicon / ARM64 Mac?** The image is built for `linux/amd64`. Use the platform flag:
+> ```bash
+> docker run --platform linux/amd64 -p 3000:3000 aryansin1234/inkdown:latest
+> ```
+> Or build a native ARM image locally:
+> ```bash
+> git clone https://github.com/Aryansin1234/InkDown.git && cd InkDown
+> docker build -t inkdown:local .
+> docker run -p 3000:3000 inkdown:local
+> ```
+
 ---
 
 ## What is InkDown?
@@ -34,9 +45,9 @@ InkDown turns raw Markdown into documents you can actually share:
 ```
 
 **Three ways to use it:**
-- **Web UI** — drag & drop or paste Markdown, download the document
-- **REST API** — call from any language, any platform
-- **CLI** — `node src/cli.js input.md output.pdf`
+- **🌐 Web UI** — drag & drop or paste Markdown, live preview, download the document
+- **🔌 REST API** — call from any language, any platform
+- **⌨️ CLI** — `node src/cli.js input.md output.pdf`
 
 ---
 
@@ -44,16 +55,19 @@ InkDown turns raw Markdown into documents you can actually share:
 
 | Feature | Details |
 |---------|---------|
-| 🎨 Syntax Highlighting | 190+ languages, GitHub-light theme |
-| 📊 Smart Tables | Pipe tables, grid tables, multiline tables — all with borders & alignment |
-| 📄 Page Break Control | `<!-- pagebreak -->` comments or auto-break before H1 |
-| 📑 Table of Contents | Auto-generated TOC with clickable anchor links |
-| 🔢 Page Numbers | Footer on every page: *Title — Page X / Y* |
-| ⚡ PDF Output | Headless Chrome via Puppeteer, A4 format |
-| 📝 DOCX Output | Native Word documents via Pandoc — real heading styles, bordered tables |
-| 🔌 REST API v1 | JSON body · file upload · URL fetch |
-| 🔒 API Key Auth | Optional `INKDOWN_API_KEYS` env var |
-| 🏃 Non-root | Runs as unprivileged `inkdown` user |
+| 🎨 **Syntax Highlighting** | 190+ languages, GitHub-light theme |
+| 📊 **Smart Tables** | Pipe, grid, multiline tables — borders & alignment |
+| 📈 **Mermaid Diagrams** | Flowcharts, sequence, Gantt, pie, ER, state, class, git graph, mindmap — rendered as high-DPI PNG |
+| 📄 **Page Break Control** | `<!-- pagebreak -->` comments or auto-break before H1 |
+| 📑 **Table of Contents** | Auto-generated, clickable TOC in both PDF and DOCX |
+| 🔢 **Page Numbers** | Footer on every page: *Title — Page X / Y* |
+| ➗ **Math (LaTeX)** | Inline `$E=mc^2$` and block `$$...$$` equations via KaTeX |
+| ⚡ **PDF Output** | Headless Chrome via Puppeteer, A4 format, print-quality |
+| 📝 **DOCX Output** | Native Word documents via Pandoc — real styles, embedded images |
+| 👁️ **Live Preview** | Real-time Markdown preview with Mermaid rendering |
+| 🔌 **REST API v1** | JSON body · file upload · URL fetch |
+| 🔒 **API Key Auth** | Optional `INKDOWN_API_KEYS` env var |
+| 🏃 **Non-root** | Runs as unprivileged `inkdown` user |
 
 ---
 
@@ -62,7 +76,6 @@ InkDown turns raw Markdown into documents you can actually share:
 | Tag | Description |
 |-----|-------------|
 | `latest` | Most recent stable build |
-| `v1.0.0` | First stable release |
 
 ---
 
@@ -72,6 +85,12 @@ InkDown turns raw Markdown into documents you can actually share:
 
 ```bash
 docker run -p 3000:3000 aryansin1234/inkdown:latest
+```
+
+### Apple Silicon / ARM64 Mac
+
+```bash
+docker run --platform linux/amd64 -p 3000:3000 aryansin1234/inkdown:latest
 ```
 
 ### Detached (background)
@@ -147,7 +166,7 @@ docker run -p 3000:3000 \
 |----------|---------|-------------|
 | `PORT` | `3000` | HTTP port the server listens on |
 | `INKDOWN_API_KEYS` | *(unset — open)* | Comma-separated API keys. When set, `/api/v1/convert` requires authentication. |
-| `INKDOWN_CORS_ORIGINS` | `*` | Allowed CORS origins. Restrict in production: `https://myapp.com` |
+| `INKDOWN_CORS_ORIGINS` | `*` | Allowed CORS origins. Restrict in production. |
 | `PUPPETEER_EXECUTABLE_PATH` | `/usr/bin/chromium` | Pre-configured — no need to change |
 | `NODE_ENV` | `production` | Node environment |
 
@@ -167,7 +186,7 @@ curl http://localhost:3000/api/v1/health
 {
   "status": "ok",
   "version": "1.0.0",
-  "timestamp": "2026-04-25T00:00:00.000Z",
+  "timestamp": "2026-05-16T00:00:00.000Z",
   "formats": ["pdf", "docx"]
 }
 ```
@@ -190,14 +209,19 @@ curl -X POST http://localhost:3000/api/v1/convert \
   --output document.docx
 ```
 
-### Convert with API Key
+### Convert with Options
 
 ```bash
 curl -X POST http://localhost:3000/api/v1/convert \
   -H "Content-Type: application/json" \
-  -H "X-API-Key: your-secret-key" \
-  -d '{"markdown": "# Hello\n\nWorld!", "format": "pdf", "toc": true}' \
-  --output document.pdf
+  -d '{
+    "markdown": "# Report\n\n## Chapter 1\n\nContent here.",
+    "format": "pdf",
+    "toc": true,
+    "autoBreak": true,
+    "title": "My Report"
+  }' \
+  --output report.pdf
 ```
 
 ### Upload a File
@@ -214,8 +238,18 @@ curl -X POST http://localhost:3000/api/v1/convert \
 ```bash
 curl -X POST http://localhost:3000/api/v1/convert \
   -H "Content-Type: application/json" \
-  -d '{"url": "https://raw.githubusercontent.com/Aryansin1234/InkDown/docker-version/README.md", "format": "pdf"}' \
+  -d '{"url": "https://raw.githubusercontent.com/Aryansin1234/InkDown/main/README.md", "format": "pdf"}' \
   --output README.pdf
+```
+
+### With API Key
+
+```bash
+curl -X POST http://localhost:3000/api/v1/convert \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: your-secret-key" \
+  -d '{"markdown": "# Hello", "format": "pdf"}' \
+  --output document.pdf
 ```
 
 ### Request Parameters
@@ -230,8 +264,27 @@ curl -X POST http://localhost:3000/api/v1/convert \
 | `toc` | Boolean | `false` | Generate a Table of Contents |
 | `autoBreak` | Boolean | `false` | Auto page-break before every H1 |
 
-**Response:** Binary file download with `Content-Disposition: attachment`.  
+**Response:** Binary file download with `Content-Disposition: attachment`.
 **On error:** `{ "error": "...", "code": "..." }`
+
+---
+
+## Supported Markdown Features
+
+- **GFM tables** — pipe, grid, multiline, simple
+- **Task lists** — `- [x] done` / `- [ ] todo`
+- **Strikethrough** — `~~text~~`
+- **Footnotes** — `[^1]` with references
+- **Definition lists** — `Term` / `: Definition`
+- **Math** — inline `$...$` and block `$$...$$` via KaTeX
+- **Mermaid diagrams** — fenced ` ```mermaid ` code blocks
+  - Flowcharts (TD, LR), Sequence, Class, State, ER
+  - Gantt charts, Pie charts, Git graphs, Mindmaps
+- **Syntax highlighting** — 190+ languages via highlight.js
+- **Page breaks** — `<!-- pagebreak -->` or `<div style="page-break-after: always;"></div>`
+- **Auto page breaks** — optional break before every H1
+- **Images** — local and remote, auto-inlined as base64
+- **Raw HTML** — passed through to PDF, sanitized for DOCX
 
 ---
 
@@ -240,38 +293,52 @@ curl -X POST http://localhost:3000/api/v1/convert \
 | Component | Version | Purpose |
 |-----------|---------|---------|
 | `node:20-slim` | 20 LTS | JavaScript runtime |
-| Chromium | latest (apt) | Headless PDF rendering |
-| Pandoc | latest (apt) | Native DOCX generation |
-| Puppeteer | `^24` | Chrome automation (uses system Chromium) |
+| Chromium | system (apt) | Headless PDF rendering |
+| Pandoc | system (apt) | Native DOCX generation |
+| Puppeteer | `^24` | Chrome automation |
+| Mermaid | `^11` | Diagram rendering (bundled, no CDN) |
 | marked | `^13` | Markdown → HTML parser |
-| highlight.js | `^11` | Syntax highlighting (190+ languages) |
+| highlight.js | `^11` | Syntax highlighting |
+| KaTeX | `^0.16` | LaTeX math rendering |
 | Express | `^5` | HTTP server |
-| Non-root user `inkdown` | — | Security best-practice |
 
-> **Base image:** `node:20-slim` (Debian)  
-> **Exposed port:** `3000`  
-> **Image size:** ~400 MB  
+> **Base image:** `node:20-slim` (Debian)
+> **Exposed port:** `3000`
+> **Image size:** ~400 MB
 > **Architecture:** `linux/amd64`
+> **Runs as:** non-root `inkdown` user
 
 ---
 
 ## Security
 
 - Runs as a **non-root user** (`inkdown`) inside the container
-- URL fetching only allows public `http`/`https` addresses — private IPs, loopback, and cloud metadata endpoints (`169.254.x.x`) are blocked
-- Image inlining is restricted to files inside the document's own directory — path traversal is blocked
+- URL fetching blocks private IPs, loopback, and cloud metadata endpoints (`169.254.x.x`)
+- Image inlining restricted to the document's own directory — path traversal blocked
+- File uploads limited to **50 MB**, only `.md` and `.txt` accepted
 - Set `INKDOWN_API_KEYS` to require authentication on the convert endpoint
-- Set `INKDOWN_CORS_ORIGINS` to restrict which browser origins can call the API
+- Set `INKDOWN_CORS_ORIGINS` to restrict browser origins
+
+---
+
+## Troubleshooting
+
+| Issue | Solution |
+|-------|----------|
+| `no matching manifest for linux/arm64` | Add `--platform linux/amd64` to `docker run` |
+| Conversion timeout | Large documents with many Mermaid diagrams may take longer |
+| DOCX won't open in Word | Ensure you're on the latest image — includes Pandoc 3.9 compatibility patches |
+| Port already in use | Map a different port: `-p 8080:3000` |
+| Container exits immediately | Check logs: `docker logs inkdown` |
 
 ---
 
 ## Source & Links
 
-- **GitHub:** https://github.com/Aryansin1234/InkDown
-- **Docker Hub:** https://hub.docker.com/r/aryansin1234/inkdown
-- **API Docs:** https://github.com/Aryansin1234/InkDown/blob/docker-version/API.md
-- **Issues:** https://github.com/Aryansin1234/InkDown/issues
+- **GitHub:** [github.com/Aryansin1234/InkDown](https://github.com/Aryansin1234/InkDown)
+- **Docker Hub:** [hub.docker.com/r/aryansin1234/inkdown](https://hub.docker.com/r/aryansin1234/inkdown)
+- **Issues:** [github.com/Aryansin1234/InkDown/issues](https://github.com/Aryansin1234/InkDown/issues)
 
 ---
 
-*Made with ☕ — your documents never leave your machine.*
+*Made with ☕ — your documents never leave your infrastructure.*

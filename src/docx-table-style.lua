@@ -5,14 +5,10 @@
   alternating row colors to match the PDF output styling.
 ]]
 
+-- Table styling is handled via reference.docx template.
+-- Direct OpenXML injection was removed because inserting a bare
+-- <w:tblPr> outside of <w:tbl> produces invalid OOXML that
+-- Word for Mac refuses to open.
 function Table(tbl)
-  -- Inject raw OpenXML table properties to use the Table Grid style
-  local raw_open = pandoc.RawBlock('openxml',
-    '<w:tblPr>' ..
-    '<w:tblStyle w:val="TableGrid"/>' ..
-    '<w:tblW w:w="5000" w:type="pct"/>' ..
-    '<w:tblLook w:val="04A0" w:firstRow="1" w:lastRow="0" w:firstColumn="0" w:lastColumn="0" w:noHBand="0" w:noVBand="1"/>' ..
-    '</w:tblPr>')
-
-  return pandoc.Blocks({ raw_open, tbl })
+  return tbl
 end

@@ -173,7 +173,18 @@ async function renderToSvg(code, browserOrPage) {
  * @returns {Promise<Buffer>} PNG image buffer
  */
 async function renderToPng(code, opts = {}) {
-  const { scale = 2, browser: existingBrowser, maxWidth = 680 } = opts;
+  const { scale = 2, browser: existingBrowser } = opts;
+
+  // Detect diagram type to choose appropriate viewport width
+  const trimmedCode = code.trim().toLowerCase();
+  const isGantt    = trimmedCode.startsWith('gantt');
+  const isSequence = trimmedCode.startsWith('sequencediagram');
+  const isGitGraph = trimmedCode.startsWith('gitgraph');
+  const isER       = trimmedCode.startsWith('erdiagram');
+
+  // Gantt/sequence/git charts need wider viewports to avoid label overlap;
+  // standard flowcharts and others fit in normal DOCX page width (~680px)
+  const maxWidth = isGantt ? 1100 : (isSequence || isGitGraph) ? 960 : (opts.maxWidth || 680);
 
   const ownBrowser = !existingBrowser;
   const browser = existingBrowser || await puppeteer.launch({
@@ -183,8 +194,6 @@ async function renderToPng(code, opts = {}) {
 
   try {
     const page = await browser.newPage();
-    // Use a viewport width that matches DOCX usable page width (~6.5in = ~650px)
-    // plus small margin, so diagrams fit without cropping
     await page.setViewport({ width: maxWidth, height: 800, deviceScaleFactor: scale });
 
     const mermaidSrc = getMermaidSource();
@@ -210,8 +219,10 @@ async function renderToPng(code, opts = {}) {
 
     await page.addScriptTag({ content: mermaidSrc });
 
-    // Use useMaxWidth: true so diagrams constrain to the container width
-    await page.evaluate((containerWidth) => {
+    // Configure mermaid — Gantt charts use useMaxWidth:false so they render
+    // at natural width (the wider viewport gives them room), preventing
+    // date-label overlap.  Other diagrams constrain to container.
+    await page.evaluate((containerWidth, isGanttChart) => {
       mermaid.initialize({
         startOnLoad: false,
         theme: 'default',
@@ -222,23 +233,32 @@ async function renderToPng(code, opts = {}) {
         er:         { useMaxWidth: true, layoutDirection: 'TB',
                       fontSize: 10, entityPadding: 10,
                       minEntityWidth: 80, minEntityHeight: 40 },
-        gantt:      { useMaxWidth: true, fontSize: 11, barHeight: 24, barGap: 6,
-                      sectionFontSize: 12, numberSectionStyles: 4,
-                      leftPadding: 80 },
+        gantt:      { useMaxWidth: !isGanttChart,
+                      fontSize: 12, barHeight: 28, barGap: 8,
+                      sectionFontSize: 13, numberSectionStyles: 4,
+                      leftPadding: 100, topPadding: 50,
+                      tickInterval: 'month',
+                      axisFormat: '%b %Y' },
       });
-    }, maxWidth - 20);
+    }, maxWidth - 20, isGantt);
 
-    const rendered = await page.evaluate(async (diagramCode) => {
+    const rendered = await page.evaluate(async (diagramCode, gantt) => {
       try {
         const { svg } = await mermaid.render('mermaid-diagram', diagramCode);
         document.getElementById('container').innerHTML = svg;
 
-        // Force the SVG to fit within container
         const svgEl = document.querySelector('#container svg');
         if (svgEl) {
-          svgEl.style.maxWidth = '100%';
-          svgEl.style.height = 'auto';
-          svgEl.style.width = '100%';
+          if (gantt) {
+            // Let Gantt charts use their natural width — we have a wide viewport
+            svgEl.style.width = 'auto';
+            svgEl.style.maxWidth = 'none';
+            svgEl.style.height = 'auto';
+          } else {
+            svgEl.style.maxWidth = '100%';
+            svgEl.style.height = 'auto';
+            svgEl.style.width = '100%';
+          }
 
           // For ER diagrams, scale down further to prevent overflow
           const isER = diagramCode.trim().toLowerCase().startsWith('erdiagram');
@@ -251,7 +271,7 @@ async function renderToPng(code, opts = {}) {
       } catch (e) {
         return false;
       }
-    }, code);
+    }, code, isGantt);
 
     if (!rendered) {
       await page.close();

@@ -25,6 +25,72 @@ function tmpFile(ext) {
   return path.join(os.tmpdir(), `inkdown-${crypto.randomUUID()}${ext}`);
 }
 
+/**
+ * Post-process a Pandoc-generated DOCX to fix Word compatibility.
+ * Pandoc 3.9 omits pgSz/pgMar in sectPr and compatibilityMode in
+ * settings.xml, which causes Word for Mac to refuse to open the file.
+ *
+ * Uses Python's zipfile module (instead of adm-zip) because Word is
+ * very sensitive to ZIP structure and Python produces byte-identical
+ * compliant output.
+ */
+function patchDocxForWordCompat(docxPath) {
+  const { execFileSync } = require('child_process');
+  const pyScript = `
+import zipfile, shutil, sys, os, re, tempfile
+
+src = sys.argv[1]
+tmp_fd, tmp_path = tempfile.mkstemp(suffix='.docx')
+os.close(tmp_fd)
+
+with zipfile.ZipFile(src, 'r') as zin, zipfile.ZipFile(tmp_path, 'w', zipfile.ZIP_DEFLATED) as zout:
+    for item in zin.namelist():
+        data = zin.read(item)
+
+        if item == 'word/document.xml':
+            text = data.decode('utf-8')
+            if 'w:pgSz' not in text:
+                text = text.replace(
+                    '</w:sectPr>',
+                    '<w:pgSz w:w="12240" w:h="15840"/>'
+                    '<w:pgMar w:top="1440" w:right="1440" w:bottom="1440" w:left="1440" w:header="720" w:footer="720" w:gutter="0"/>'
+                    '<w:cols w:space="720"/>'
+                    '<w:docGrid w:linePitch="360"/>'
+                    '</w:sectPr>'
+                )
+            data = text.encode('utf-8')
+
+        elif item == 'word/settings.xml':
+            text = data.decode('utf-8')
+            if 'compatibilityMode' not in text:
+                compat = (
+                    '<w:compat>'
+                    '<w:compatSetting w:name="compatibilityMode" w:uri="http://schemas.microsoft.com/office/word" w:val="15"/>'
+                    '<w:compatSetting w:name="overrideTableStyleFontSizeAndJustification" w:uri="http://schemas.microsoft.com/office/word" w:val="1"/>'
+                    '<w:compatSetting w:name="enableOpenTypeFeatures" w:uri="http://schemas.microsoft.com/office/word" w:val="1"/>'
+                    '</w:compat>'
+                )
+                text = text.replace('</w:settings>', compat + '</w:settings>')
+            text = re.sub(r'<w:doNotTrackMoves\\s*/>', '', text)
+            data = text.encode('utf-8')
+
+        zout.writestr(item, data)
+
+shutil.move(tmp_path, src)
+print('OK')
+`;
+
+  try {
+    execFileSync('python3', ['-c', pyScript, docxPath], {
+      timeout: 10000,
+      stdio: ['pipe', 'pipe', 'pipe'],
+    });
+  } catch (err) {
+    // If Python isn't available, skip patching (file may still work)
+    console.warn('  ⚠ Could not patch DOCX for Word compatibility:', err.message);
+  }
+}
+
 function cleanup(...files) {
   for (const f of files) {
     if (f && fs.existsSync(f)) {
@@ -183,17 +249,18 @@ async function convertToDocx(markdown, opts = {}) {
       args.push('--metadata=native-toc:true', '--metadata=toc-depth:4');
     }
 
-    // Lua filter for DOCX enhancements (native TOC field, etc.)
-    const luaFilter = path.join(__dirname, 'docx-enhancements.lua');
-    if (fs.existsSync(luaFilter)) {
-      args.push(`--lua-filter=${luaFilter}`);
-    }
+    // Lua filter for DOCX enhancements — DISABLED: raw OOXML SDT blocks
+    // may produce invalid output with Pandoc 3.9
+    // const luaFilter = path.join(__dirname, 'docx-enhancements.lua');
+    // if (fs.existsSync(luaFilter)) {
+    //   args.push(`--lua-filter=${luaFilter}`);
+    // }
 
-    // Lua filter for DOCX table styling (borders, header shading)
-    const tableStyleFilter = path.join(__dirname, 'docx-table-style.lua');
-    if (fs.existsSync(tableStyleFilter)) {
-      args.push(`--lua-filter=${tableStyleFilter}`);
-    }
+    // Lua filter for DOCX table styling — DISABLED: now a no-op
+    // const tableStyleFilter = path.join(__dirname, 'docx-table-style.lua');
+    // if (fs.existsSync(tableStyleFilter)) {
+    //   args.push(`--lua-filter=${tableStyleFilter}`);
+    // }
 
     // Reference template (custom styles, header/footer, margins)
     if (fs.existsSync(REFERENCE_DOCX)) {
@@ -220,7 +287,10 @@ async function convertToDocx(markdown, opts = {}) {
       });
     });
 
-    // 8. Read result
+    // 8. Post-process for Word compatibility (Pandoc 3.9 fix)
+    patchDocxForWordCompat(outputPath);
+
+    // 9. Read result
     const buffer = fs.readFileSync(outputPath);
 
     return { buffer, report };
