@@ -6,7 +6,7 @@
 
 <p align="center">
   <strong>Markdown in. Beautiful documents out.</strong><br>
-  <sub>PDF &bull; DOCX &bull; REST API &bull; Syntax Highlighting &bull; Smart Tables &bull; Page Control</sub>
+  <sub>PDF &bull; DOCX &bull; Mermaid Diagrams &bull; LaTeX Math &bull; REST API &bull; PWA &bull; Syntax Highlighting &bull; Smart Tables</sub>
 </p>
 
 <p align="center">
@@ -38,16 +38,19 @@ InkDown turns raw Markdown into **pixel-perfect PDFs** and **native Word documen
 
 | | Feature | Details |
 |---|---------|---------|
+| 📈 | **Mermaid Diagrams** | Flowcharts, sequence, Gantt, pie, ER, state, class, git graph, mindmaps — rendered as high-DPI PNG |
+| ➗ | **LaTeX Math** | Inline `$E=mc^2$` and block `$$...$$` equations via KaTeX |
 | 🎨 | **Syntax Highlighting** | 190+ languages, GitHub-light theme via highlight.js |
 | 📐 | **Overflow-proof Code** | Long lines wrap cleanly — nothing bleeds off the page |
-| 📊 | **Smart Tables** | Auto-scale to page width, word-wrap cells, alternating row colors |
+| 📊 | **Smart Tables** | Pipe, grid, multiline tables — auto-scale, word-wrap, alternating rows |
 | 🖼️ | **Image Handling** | Local images base64-inlined, remote images auto-constrained |
 | 📄 | **Page Break Control** | Manual `<!-- pagebreak -->` comments or auto-break before H1 |
-| 📑 | **Table of Contents** | One-click TOC with clickable anchor links |
+| 📑 | **Table of Contents** | Auto-generated, clickable TOC in both PDF and DOCX |
 | 🔢 | **Page Numbers** | Footer on every page: *Title — Page X / Y* |
+| 📱 | **PWA** | Installable on any device, works offline, add to home screen |
 | 🌗 | **Dark & Light Theme** | Toggle in the web UI, preference persists across sessions |
-| ⚡ | **PDF Output** | Headless Chrome rendering via Puppeteer, A4 format |
-| 📝 | **DOCX Output** | Native Word documents via Pandoc — real heading styles, native TOC |
+| ⚡ | **PDF Output** | Headless Chrome rendering via Puppeteer, A4 print-quality |
+| 📝 | **DOCX Output** | Native Word documents via Pandoc — real styles, embedded Mermaid images |
 | 🧠 | **Smart Analyzer** | AST-based pre-processing — fixes heading hierarchy, detects ASCII art |
 | 🔌 | **REST API** | Call from any language — JSON body, file upload, or URL fetch |
 
@@ -431,6 +434,8 @@ const greet = name => `Hello, ${name}!`;
 |---------|------|
 | **Puppeteer** | Headless Chrome → PDF rendering |
 | **Pandoc** | Markdown → native Word DOCX (system binary) |
+| **Mermaid** | 10 diagram types → high-DPI PNG (bundled, no CDN) |
+| **KaTeX** | LaTeX math rendering (inline & block) |
 | **marked** | Markdown → HTML (GFM spec) |
 | **highlight.js** | Syntax highlighting (190+ languages) |
 | **unified / remark** | Markdown AST parsing & smart analysis plugins |
@@ -464,6 +469,19 @@ npm run convert     # Alias for node src/cli.js
 - Set `INKDOWN_CORS_ORIGINS` to restrict which origins can call the API from a browser.
 
 ---
+
+---
+
+## 🤝 Collaborate
+
+InkDown is open source and actively maintained. Contributions are welcome!
+
+- **🐛 Found a bug?** [Open an issue](https://github.com/Aryansin1234/InkDown/issues)
+- **💡 Have an idea?** Start a [discussion](https://github.com/Aryansin1234/InkDown/discussions) or open a feature request
+- **🔧 Want to contribute?** Fork the repo, make your changes, and submit a PR
+- **📬 Want to collaborate?** Reach out — I'm open to partnerships, integrations, and co-building
+
+Whether it's adding new output formats, improving diagram support, building integrations with AI agents, or deploying InkDown as part of your platform — let's build together.
 
 <p align="center">
   <sub>Made with ☕ and too many late nights.</sub><br>
