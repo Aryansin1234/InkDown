@@ -28,7 +28,7 @@ InkDown turns raw Markdown into **pixel-perfect PDFs** and **native Word documen
   ┌─────────────┐      ┌──────────────┐      ┌──────────────────┐
   │  Markdown   │ ───▶ │   InkDown    │ ───▶ │  PDF  or  DOCX   │
   │  Web · CLI  │      │  REST API    │      │  pixel-perfect   │
-  │  REST API   │      │  ⚡ Engine   │      │  ready to share  │
+  │  REST API   │      │  ⚡ Engine    │      │  ready to share  │
   └─────────────┘      └──────────────┘      └──────────────────┘
 ```
 
