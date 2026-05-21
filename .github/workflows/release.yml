@@ -1,0 +1,55 @@
+name: Release Extension
+
+# Runs whenever you push a tag like v1.4.0 or v2.0.0
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write   # needed to create GitHub releases
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        working-directory: vscode-extension
+        run: npm ci
+
+      - name: Compile TypeScript
+        working-directory: vscode-extension
+        run: npm run compile
+
+      - name: Package .vsix
+        working-directory: vscode-extension
+        run: npx @vscode/vsce package --no-dependencies --allow-missing-repository
+
+      - name: Get version from tag
+        id: version
+        run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: "InkDown v${{ steps.version.outputs.version }}"
+          body: |
+            ## Install
+            1. Download `inkdown-vscode-${{ steps.version.outputs.version }}.vsix` below.
+            2. In VS Code: **Extensions → ⋯ menu → Install from VSIX…**
+
+            Or from the terminal:
+            ```bash
+            code --install-extension inkdown-vscode-${{ steps.version.outputs.version }}.vsix
+            ```
+          files: vscode-extension/inkdown-vscode-${{ steps.version.outputs.version }}.vsix
+          draft: false
+          prerelease: false

@@ -1,0 +1,8 @@
+node_modules/
+.vscode-test/
+src/
+scripts/
+*.vsix
+tsconfig.json
+.eslintrc.json
+# icon.png and README.md are intentionally NOT excluded — marketplace needs them

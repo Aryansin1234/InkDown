@@ -1,0 +1,168 @@
+{
+  "name": "inkdown-vscode",
+  "displayName": "InkDown — Markdown to PDF & DOCX",
+  "description": "Convert Markdown to production-quality PDF and DOCX with Mermaid diagrams, math (KaTeX), syntax highlighting, live preview, and one-click export.",
+  "version": "1.3.0",
+  "publisher": "inkdown",
+  "license": "MIT",
+  "icon": "icon.png",
+  "galleryBanner": {
+    "color": "#1e1e2e",
+    "theme": "dark"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/inkdown/inkdown-vscode"
+  },
+  "homepage": "https://github.com/inkdown/inkdown-vscode#readme",
+  "engines": { "vscode": "^1.90.0" },
+  "categories": ["Other", "Formatters"],
+  "keywords": ["markdown", "pdf", "docx", "word", "export", "converter", "mermaid", "katex", "math", "preview", "pandoc", "inkdown"],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "inkdown.convertToPdf",
+        "title": "InkDown: Convert to PDF",
+        "icon": "$(file-pdf)"
+      },
+      {
+        "command": "inkdown.convertToDocx",
+        "title": "InkDown: Convert to DOCX",
+        "icon": "$(file-text)"
+      },
+      {
+        "command": "inkdown.convertWithOptions",
+        "title": "InkDown: Convert with Options…"
+      },
+      {
+        "command": "inkdown.openPreview",
+        "title": "InkDown: Open Preview",
+        "icon": "$(open-preview)"
+      },
+      {
+        "command": "inkdown.startServer",
+        "title": "InkDown: Start Server"
+      },
+      {
+        "command": "inkdown.stopServer",
+        "title": "InkDown: Stop Server"
+      }
+    ],
+    "menus": {
+      "editor/title": [
+        {
+          "command": "inkdown.openPreview",
+          "when": "resourceLangId == markdown",
+          "group": "navigation@1"
+        },
+        {
+          "command": "inkdown.convertToPdf",
+          "when": "resourceLangId == markdown",
+          "group": "navigation@2"
+        }
+      ],
+      "editor/context": [
+        {
+          "command": "inkdown.openPreview",
+          "when": "editorLangId == markdown",
+          "group": "navigation@1"
+        },
+        {
+          "command": "inkdown.convertToPdf",
+          "when": "editorLangId == markdown",
+          "group": "navigation@2"
+        },
+        {
+          "command": "inkdown.convertToDocx",
+          "when": "editorLangId == markdown",
+          "group": "navigation@3"
+        },
+        {
+          "command": "inkdown.convertWithOptions",
+          "when": "editorLangId == markdown",
+          "group": "navigation@4"
+        }
+      ],
+      "explorer/context": [
+        {
+          "command": "inkdown.openPreview",
+          "when": "resourceLangId == markdown",
+          "group": "navigation@1"
+        },
+        {
+          "command": "inkdown.convertToPdf",
+          "when": "resourceLangId == markdown",
+          "group": "navigation@2"
+        },
+        {
+          "command": "inkdown.convertToDocx",
+          "when": "resourceLangId == markdown",
+          "group": "navigation@3"
+        },
+        {
+          "command": "inkdown.convertWithOptions",
+          "when": "resourceLangId == markdown",
+          "group": "navigation@4"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "InkDown",
+      "properties": {
+        "inkdown.inkdownPath": {
+          "type": "string",
+          "default": "",
+          "description": "Path to the InkDown installation directory. Leave blank to auto-detect from the workspace."
+        },
+        "inkdown.serverUrl": {
+          "type": "string",
+          "default": "http://localhost:3000",
+          "description": "URL of the InkDown server. Used when the server is running."
+        },
+        "inkdown.outputDirectory": {
+          "type": "string",
+          "default": "",
+          "description": "Output directory for converted files. Leave blank to save next to the source file."
+        },
+        "inkdown.defaultFormat": {
+          "type": "string",
+          "default": "pdf",
+          "enum": ["pdf", "docx"],
+          "description": "Default output format."
+        },
+        "inkdown.openAfterConvert": {
+          "type": "boolean",
+          "default": true,
+          "description": "Open the converted file after successful conversion."
+        },
+        "inkdown.defaultToc": {
+          "type": "boolean",
+          "default": false,
+          "description": "Include a Table of Contents by default."
+        },
+        "inkdown.defaultAutoBreak": {
+          "type": "boolean",
+          "default": false,
+          "description": "Insert page breaks before H1 headings by default."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "sync-installed": "cp out/*.js out/*.js.map \"$HOME/.vscode/extensions/inkdown.inkdown-vscode-1.3.0/out/\" 2>/dev/null || true",
+    "package": "npx @vscode/vsce package --no-dependencies",
+    "release": "node scripts/release.js"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/vscode": "^1.90.0",
+    "typescript": "^5.4.0"
+  }
+}
