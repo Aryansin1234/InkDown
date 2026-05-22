@@ -2,7 +2,7 @@
   "name": "inkdown-vscode",
   "displayName": "InkDown — Markdown to PDF & DOCX",
   "description": "Convert Markdown to production-quality PDF and DOCX with Mermaid diagrams, math (KaTeX), syntax highlighting, live preview, and one-click export.",
-  "version": "1.3.0",
+  "version": "1.3.8",
   "publisher": "inkdown",
   "license": "MIT",
   "icon": "icon.png",
@@ -10,14 +10,39 @@
     "color": "#1e1e2e",
     "theme": "dark"
   },
+  "author": {
+    "name": "Aryan Singh",
+    "url": "https://github.com/Aryansin1234"
+  },
   "repository": {
     "type": "git",
-    "url": "https://github.com/inkdown/inkdown-vscode"
+    "url": "https://github.com/Aryansin1234/InkDown"
   },
-  "homepage": "https://github.com/inkdown/inkdown-vscode#readme",
-  "engines": { "vscode": "^1.90.0" },
-  "categories": ["Other", "Formatters"],
-  "keywords": ["markdown", "pdf", "docx", "word", "export", "converter", "mermaid", "katex", "math", "preview", "pandoc", "inkdown"],
+  "homepage": "https://github.com/Aryansin1234/InkDown#readme",
+  "bugs": {
+    "url": "https://github.com/Aryansin1234/InkDown/issues"
+  },
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "categories": [
+    "Other",
+    "Formatters"
+  ],
+  "keywords": [
+    "markdown",
+    "pdf",
+    "docx",
+    "word",
+    "export",
+    "converter",
+    "mermaid",
+    "katex",
+    "math",
+    "preview",
+    "pandoc",
+    "inkdown"
+  ],
   "activationEvents": [
     "onStartupFinished"
   ],
@@ -123,6 +148,11 @@
           "default": "http://localhost:3000",
           "description": "URL of the InkDown server. Used when the server is running."
         },
+        "inkdown.apiKey": {
+          "type": "string",
+          "default": "",
+          "description": "API key for authenticating with the InkDown server (optional)."
+        },
         "inkdown.outputDirectory": {
           "type": "string",
           "default": "",
@@ -131,7 +161,10 @@
         "inkdown.defaultFormat": {
           "type": "string",
           "default": "pdf",
-          "enum": ["pdf", "docx"],
+          "enum": [
+            "pdf",
+            "docx"
+          ],
           "description": "Default output format."
         },
         "inkdown.openAfterConvert": {
@@ -153,11 +186,12 @@
     }
   },
   "scripts": {
-    "vscode:prepublish": "npm run compile",
+    "vscode:prepublish": "npm run bundle-inkdown && npm run compile",
+    "bundle-inkdown": "node scripts/bundle-inkdown.js",
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
-    "sync-installed": "cp out/*.js out/*.js.map \"$HOME/.vscode/extensions/inkdown.inkdown-vscode-1.3.0/out/\" 2>/dev/null || true",
-    "package": "npx @vscode/vsce package --no-dependencies",
+    "sync-installed": "npm run bundle-inkdown && for d in \"$HOME\"/.vscode/extensions/inkdown.inkdown-vscode-* \"$HOME\"/.vscode-insiders/extensions/inkdown.inkdown-vscode-*; do [ -d \"$d\" ] && cp out/*.js out/*.js.map \"$d/out/\" && rm -rf \"$d/bundled\" && cp -R bundled \"$d/bundled\"; done; echo 'synced'",
+    "package": "npm run bundle-inkdown && npx @vscode/vsce package --no-dependencies",
     "release": "node scripts/release.js"
   },
   "devDependencies": {

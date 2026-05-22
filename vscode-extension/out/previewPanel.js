@@ -67,15 +67,16 @@ class PreviewPanel {
         }
         return text;
     }
-    constructor(panel, _extensionUri, initialDoc) {
+    constructor(panel, extensionUri, initialDoc) {
         this.disposables = [];
         this.panel = panel;
-        // Embed the initial markdown directly in the HTML so the preview renders
-        // immediately — no postMessage round-trip needed for the first paint.
-        this.panel.webview.html = this.buildHtml(PreviewPanel.getNonce(), initialDoc?.getText() ?? '');
+        this.extensionUri = extensionUri;
+        const initialMarkdown = initialDoc?.getText() ?? '';
+        // Register all handlers BEFORE setting webview.html so no message is
+        // ever missed due to a race condition.
         this.disposables.push(this.panel.webview.onDidReceiveMessage((msg) => {
-            // 'ready' is still sent by the webview; use it to push any update that
-            // arrived while the webview was reloading / hidden.
+            // 'ready' is sent when the webview script has executed.  Push any
+            // pending live-update that arrived while the webview was reloading.
             if (msg.type === 'ready' && this.pendingMarkdown !== undefined) {
                 void this.panel.webview.postMessage({ type: 'update', markdown: this.pendingMarkdown });
                 this.pendingMarkdown = undefined;
@@ -92,6 +93,10 @@ class PreviewPanel {
                 this.push(editor.document.getText());
             }
         }), this.panel.onDidDispose(() => this.dispose(), null, this.disposables));
+        // Embed initial markdown as base64 in a <body> data attribute — purely
+        // declarative HTML, zero CSP/postMessage dependency.  The inline script
+        // reads it with atob() as soon as the DOM is ready.
+        this.panel.webview.html = this.buildHtml(PreviewPanel.getNonce(), initialMarkdown);
     }
     syncWithActiveEditor(doc) {
         const d = doc ?? vscode.window.activeTextEditor?.document;
@@ -113,12 +118,12 @@ class PreviewPanel {
         void this.panel.webview.postMessage({ type: 'update', markdown });
     }
     buildHtml(nonce, initialMarkdown) {
-        // Safely embed initial markdown as JSON so it can be read without any
-        // postMessage round-trip.  Escape </script> so the HTML parser can't be
-        // tricked into ending the element early.
-        const initialDataJson = JSON.stringify(initialMarkdown).replace(/<\//g, '<\\/');
-        // CDN versions pinned for stability
-        const markedCdn = 'https://cdn.jsdelivr.net/npm/marked@13/marked.min.js';
+        // Encode initial markdown as base64 so it can be stored safely in an HTML
+        // attribute (base64 chars are all attribute-safe — no escaping needed).
+        const initialBase64 = Buffer.from(initialMarkdown, 'utf8').toString('base64');
+        // marked is bundled locally — guaranteed to load with no network dependency.
+        const markedUri = this.panel.webview.asWebviewUri(vscode.Uri.joinPath(this.extensionUri, 'media', 'marked.min.js')).toString();
+        // Optional CDN libraries (loaded async — preview works without them):
         const hljsCdn = 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js';
         const hljsCss = 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css';
         const hljsCssDark = 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css';
@@ -126,17 +131,17 @@ class PreviewPanel {
         const katexJs = 'https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js';
         const katexAutoRender = 'https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js';
         const mermaidJs = 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js';
+        // The webview's own scheme must be in script-src so the local marked file loads.
+        const cspSource = this.panel.webview.cspSource;
         return `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <!-- Initial markdown embedded directly — no postMessage needed for first paint -->
-  <script id="inkdown-initial-data" type="application/json" nonce="${nonce}">${initialDataJson}</script>
   <meta http-equiv="Content-Security-Policy" content="
     default-src 'none';
     style-src 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net;
-    script-src 'nonce-${nonce}' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com;
+    script-src 'nonce-${nonce}' ${cspSource} https://cdn.jsdelivr.net https://cdnjs.cloudflare.com;
     img-src data: https: blob:;
     font-src https://cdn.jsdelivr.net;
     connect-src https://cdn.jsdelivr.net https://cdnjs.cloudflare.com;
@@ -146,11 +151,13 @@ class PreviewPanel {
   <link id="hljs-light" rel="stylesheet" href="${hljsCss}">
   <link id="hljs-dark"  rel="stylesheet" href="${hljsCssDark}" disabled>
   <link rel="stylesheet" href="${katexCss}">
-  <script nonce="${nonce}" src="${markedCdn}"></script>
-  <script nonce="${nonce}" src="${hljsCdn}"></script>
-  <script nonce="${nonce}" src="${katexJs}"></script>
-  <script nonce="${nonce}" src="${katexAutoRender}"></script>
-  <script nonce="${nonce}" src="${mermaidJs}"></script>
+  <!-- marked is local and synchronous — loads instantly, no CDN dependency -->
+  <script nonce="${nonce}" src="${markedUri}"></script>
+  <!-- Optional CDN libs loaded async — if they time out, features degrade gracefully -->
+  <script nonce="${nonce}" src="${hljsCdn}" async></script>
+  <script nonce="${nonce}" src="${katexJs}" async></script>
+  <script nonce="${nonce}" src="${katexAutoRender}" async></script>
+  <script nonce="${nonce}" src="${mermaidJs}" async></script>
   <style>
     :root {
       --bg:       #ffffff;
@@ -249,7 +256,7 @@ class PreviewPanel {
     @keyframes spin { to { transform: rotate(360deg); } }
   </style>
 </head>
-<body>
+<body data-initial="${initialBase64}">
   <div id="spinner"></div>
   <div id="preview"></div>
 
@@ -288,9 +295,7 @@ class PreviewPanel {
     async function renderMarkdown(markdown) {
       spinner.classList.add('active');
       try {
-        if (typeof marked === 'undefined') {
-          throw new Error('marked.js did not load. Check network/CSP settings.');
-        }
+        // marked is bundled locally — always available.
         const html = marked.parse(markdown);
         preview.innerHTML = typeof html === 'string' ? html : await html;
 
@@ -335,46 +340,50 @@ class PreviewPanel {
       new MutationObserver(applyTheme)
         .observe(body, { attributes: true, attributeFilter: ['class'] });
 
-      if (typeof marked !== 'undefined') {
-        const renderer = new marked.Renderer();
+      // When async CDN libs finish loading, ensure mermaid is initialized with
+      // the correct theme so diagrams render properly on the next update.
+      document.querySelectorAll('script[async]').forEach(function(s) {
+        s.addEventListener('load', applyTheme);
+      });
 
-        renderer.code = function(token) {
-          const code = token.text;
-          const lang = (token.lang || '').toLowerCase();
-          if (lang === 'mermaid') {
-            const escaped = code.replace(/&/g, '&amp;').replace(/"/g, '&quot;');
-            return '<div class="mermaid-placeholder" data-code="' + escaped + '"></div>';
-          }
-          if (typeof hljs !== 'undefined') {
-            const language = hljs.getLanguage(lang) ? lang : 'plaintext';
-            const highlighted = hljs.highlight(code, { language }).value;
-            return '<pre><code class="hljs language-' + language + '">' + highlighted + '</code></pre>';
-          }
-          return '<pre><code>' + code + '</code></pre>';
-        };
+      // marked is bundled locally — always available, no existence check needed.
+      const renderer = new marked.Renderer();
 
-        renderer.listitem = function(token) {
-          if (token.task) {
-            const checked = token.checked ? 'checked' : '';
-            return '<li class="task-list-item"><input type="checkbox" disabled ' + checked + '> ' +
-                   token.text + '</li>';
-          }
-          return '<li>' + token.text + '</li>';
-        };
+      renderer.code = function(token) {
+        const code = token.text;
+        const lang = (token.lang || '').toLowerCase();
+        if (lang === 'mermaid') {
+          const escaped = code.replace(/&/g, '&amp;').replace(/"/g, '&quot;');
+          return '<div class="mermaid-placeholder" data-code="' + escaped + '"></div>';
+        }
+        if (typeof hljs !== 'undefined') {
+          const language = hljs.getLanguage(lang) ? lang : 'plaintext';
+          const highlighted = hljs.highlight(code, { language }).value;
+          return '<pre><code class="hljs language-' + language + '">' + highlighted + '</code></pre>';
+        }
+        return '<pre><code>' + code + '</code></pre>';
+      };
 
-        marked.use({ renderer, gfm: true, breaks: false, useNewRenderer: true });
-      }
+      renderer.listitem = function(token) {
+        if (token.task) {
+          const checked = token.checked ? 'checked' : '';
+          return '<li class="task-list-item"><input type="checkbox" disabled ' + checked + '> ' +
+                 token.text + '</li>';
+        }
+        return '<li>' + token.text + '</li>';
+      };
+
+      marked.use({ renderer, gfm: true, breaks: false, useNewRenderer: true });
     } catch (initErr) {
       console.error('InkDown: library init error', initErr);
     }
 
-    // ── Initial render from embedded data (no postMessage needed) ────────────
+    // ── Initial render from body data attribute (base64, no CSP/postMessage) ──
     try {
-      const dataEl = document.getElementById('inkdown-initial-data');
-      const initialMd = dataEl ? JSON.parse(dataEl.textContent) : '';
-      if (initialMd) { void renderMarkdown(initialMd); }
+      const encoded = document.body.getAttribute('data-initial');
+      if (encoded) { void renderMarkdown(atob(encoded)); }
     } catch (e) {
-      console.error('InkDown: failed to parse initial data', e);
+      console.error('InkDown: initial render failed', e);
     }
 
     // ── Live-update listener (typing / editor switch) ─────────────────────────

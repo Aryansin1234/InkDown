@@ -110,9 +110,13 @@ export class InkDownClient {
     const inkdownPath = await this.serverManager.getInkDownPath();
     if (!inkdownPath) {
       throw new Error(
-        'InkDown not found. Set inkdown.inkdownPath in extension settings.'
+        'InkDown not found. Install it globally with `npm install -g inkdown`, ' +
+        'or set inkdown.inkdownPath in extension settings to point to the InkDown directory.'
       );
     }
+
+    // Ensure dependencies are installed before running CLI
+    await this.serverManager.ensureDependencies(inkdownPath);
 
     const cliPath = path.join(inkdownPath, 'src', 'cli.js');
     if (!fs.existsSync(cliPath)) {

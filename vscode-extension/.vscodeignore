@@ -6,3 +6,6 @@ scripts/
 tsconfig.json
 .eslintrc.json
 # icon.png and README.md are intentionally NOT excluded — marketplace needs them
+# bundled/ is intentionally NOT excluded — it contains the InkDown core for self-contained usage
+# Exclude node_modules inside bundled (users will npm install on first use)
+bundled/node_modules/

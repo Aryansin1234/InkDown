@@ -107,7 +107,20 @@ async function runConvert(uri, format, client, promptOptions) {
         }
     }
     catch (e) {
-        vscode.window.showErrorMessage(`InkDown: Conversion failed — ${e instanceof Error ? e.message : String(e)}`);
+        const msg = e instanceof Error ? e.message : String(e);
+        if (msg.toLowerCase().includes('pandoc is not installed')) {
+            const action = await vscode.window.showErrorMessage('InkDown: DOCX conversion requires Pandoc. Install it now?', 'Install with Homebrew', 'Show Instructions');
+            if (action === 'Install with Homebrew') {
+                const terminal = vscode.window.createTerminal('InkDown — Install Pandoc');
+                terminal.show();
+                terminal.sendText('brew install pandoc && echo "\\n✓ Pandoc installed. Try converting again."');
+            }
+            else if (action === 'Show Instructions') {
+                vscode.env.openExternal(vscode.Uri.parse('https://pandoc.org/installing.html'));
+            }
+            return;
+        }
+        vscode.window.showErrorMessage(`InkDown: Conversion failed — ${msg}`);
     }
 }
 async function gatherOptions(defaults) {

@@ -13,23 +13,11 @@ export function activate(context: vscode.ExtensionContext): void {
   registerCommands(context, serverManager);
   statusBar.register(context);
 
-  serverManager.detectInkDownPath().then((found) => {
-    if (!found) {
-      vscode.window
-        .showWarningMessage(
-          'InkDown: Could not find an InkDown installation in this workspace. Configure `inkdown.inkdownPath` in settings.',
-          'Open Settings'
-        )
-        .then((action) => {
-          if (action === 'Open Settings') {
-            vscode.commands.executeCommand(
-              'workbench.action.openSettings',
-              'inkdown.inkdownPath'
-            );
-          }
-        });
-    }
-  });
+  // Silently check if InkDown is available — only warn on first conversion failure.
+  // This avoids noisy warnings in workspaces where the user hasn't converted yet.
+  serverManager.detectInkDownPath();
+  // If not found, don't warn on activation. The error will surface
+  // when the user actually tries to convert, with actionable guidance.
 }
 
 export function deactivate(): void {

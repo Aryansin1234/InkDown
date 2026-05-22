@@ -24,7 +24,7 @@ Convert any Markdown file to a **production-quality PDF or DOCX** directly from 
 
 ## Requirements
 
-- **InkDown server** running locally (included in the [InkDown](https://github.com/inkdown/inkdown) project)
+- **InkDown server** running locally (included in the [InkDown](https://github.com/Aryansin1234/InkDown) project)
 - Start it with `InkDown: Start Server` from the command palette, or run `node server.js` in the InkDown directory
 
 ## Commands
