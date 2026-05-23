@@ -83,7 +83,11 @@ async function runConvert(
   }
 
   const outDir = config.get<string>('outputDirectory', '') || path.dirname(sourcePath);
-  const outputPath = path.join(outDir, `${baseName}.${options.format}`);
+  // Use the custom title for the output filename if the user changed it
+  const outName = options.title && options.title !== baseName
+    ? options.title.replace(/[/\\?%*:|"<>]/g, '-')
+    : baseName;
+  const outputPath = path.join(outDir, `${outName}.${options.format}`);
 
   try {
     await vscode.window.withProgress(

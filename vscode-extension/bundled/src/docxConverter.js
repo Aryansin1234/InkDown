@@ -189,7 +189,7 @@ async function convertToDocx(markdown, opts = {}) {
   const mermaidBlocks = extractMermaidBlocks(cleanMd);
   if (mermaidBlocks.length > 0) {
     const { markdown: mermaidProcessed, diagramCount } = await replaceMermaidWithImages(
-      cleanMd, mermaidTmpDir, { includeSource: true }
+      cleanMd, mermaidTmpDir, { includeSource: false }
     );
     processedMd = mermaidProcessed;
     mermaidCleanupDir = mermaidTmpDir;

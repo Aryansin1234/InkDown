@@ -135,7 +135,6 @@ export class PreviewPanel {
     const hljsCssDark = 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css';
     const katexCss = 'https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css';
     const katexJs = 'https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js';
-    const katexAutoRender = 'https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js';
     const mermaidJs = 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js';
     // The webview's own scheme must be in script-src so the local marked file loads.
     const cspSource = this.panel.webview.cspSource;
@@ -163,7 +162,6 @@ export class PreviewPanel {
   <!-- Optional CDN libs loaded async — if they time out, features degrade gracefully -->
   <script nonce="${nonce}" src="${hljsCdn}" async></script>
   <script nonce="${nonce}" src="${katexJs}" async></script>
-  <script nonce="${nonce}" src="${katexAutoRender}" async></script>
   <script nonce="${nonce}" src="${mermaidJs}" async></script>
   <style>
     :root {
@@ -245,10 +243,13 @@ export class PreviewPanel {
     hr { border: none; border-top: 1px solid var(--border); margin: 1.5em 0; }
     .task-list-item { list-style-type: none; margin-left: -1.5em; }
     .task-list-item input { margin-right: 0.5em; }
-    .mermaid-wrap { text-align: center; margin: 1.5em 0; }
-    .mermaid-wrap svg { max-width: 100%; height: auto; }
+    .mermaid-wrap { text-align: center; margin: 1.5em 0; overflow-x: auto; }
+    .mermaid-wrap svg { height: auto; min-width: 100%; }
     .mermaid-error { color: #cf222e; background: #fff8f0; border: 1px solid #ffa198;
                      border-radius: 4px; padding: 0.75em 1em; font-family: monospace; font-size: 0.85em; }
+    sup a { color: var(--link); text-decoration: none; font-weight: 600; }
+    li[id^="fn-"] { font-size: 0.9em; color: var(--bq-color); margin: 0.3em 0; }
+    li[id^="fn-"] a { color: var(--link); text-decoration: none; }
     #spinner {
       position: fixed; top: 12px; right: 16px;
       width: 20px; height: 20px;
@@ -274,6 +275,25 @@ export class PreviewPanel {
     const vscode  = acquireVsCodeApi();
 
     let mermaidCounter = 0;
+
+    // ── KaTeX math rendering ──────────────────────────────────────────────────
+    function renderMathPlaceholders(container) {
+      if (typeof katex === 'undefined') { return; }
+      const placeholders = container.querySelectorAll('.math-placeholder');
+      placeholders.forEach(function(el) {
+        const tex = el.getAttribute('data-math')
+          .replace(/&amp;/g, '&')
+          .replace(/&quot;/g, '"');
+        const displayMode = el.getAttribute('data-display') === 'true';
+        try {
+          katex.render(tex, el, { displayMode: displayMode, throwOnError: false });
+          el.classList.remove('math-placeholder');
+          el.classList.add(displayMode ? 'math-block-rendered' : 'math-inline-rendered');
+        } catch (err) {
+          el.textContent = tex;
+        }
+      });
+    }
 
     // ── Mermaid rendering ─────────────────────────────────────────────────────
     async function renderMermaidBlocks(container) {
@@ -306,16 +326,7 @@ export class PreviewPanel {
         const html = marked.parse(markdown);
         preview.innerHTML = typeof html === 'string' ? html : await html;
 
-        if (typeof renderMathInElement !== 'undefined') {
-          renderMathInElement(preview, {
-            delimiters: [
-              { left: '$$', right: '$$', display: true  },
-              { left: '$',  right: '$',  display: false },
-            ],
-            throwOnError: false,
-          });
-        }
-
+        renderMathPlaceholders(preview);
         await renderMermaidBlocks(preview);
       } catch (err) {
         preview.innerHTML =
@@ -350,8 +361,93 @@ export class PreviewPanel {
       // When async CDN libs finish loading, ensure mermaid is initialized with
       // the correct theme so diagrams render properly on the next update.
       document.querySelectorAll('script[async]').forEach(function(s) {
-        s.addEventListener('load', applyTheme);
+        s.addEventListener('load', function() {
+          applyTheme();
+          // Once mermaid loads, render any placeholders from the initial render
+          if (typeof mermaid !== 'undefined') {
+            renderMermaidBlocks(preview);
+          }
+          // Once KaTeX loads, render any math placeholders from the initial render
+          if (typeof katex !== 'undefined') {
+            renderMathPlaceholders(preview);
+          }
+        });
       });
+
+      // ── Math (KaTeX) protection for marked ──────────────────────────────────
+      // Protect $...$ and $$...$$ from being mangled by marked's inline processing.
+      // Outputs placeholders that are rendered by KaTeX after marked finishes.
+      var mathExtension = {
+        extensions: [
+          {
+            name: 'mathBlock',
+            level: 'block',
+            start: function(src) { var m = src.match(/\\$\\$/); return m ? m.index : undefined; },
+            tokenizer: function(src) {
+              var match = src.match(/^\\$\\$([\\s\\S]+?)\\$\\$/);
+              if (match) {
+                return { type: 'mathBlock', raw: match[0], text: match[1].trim() };
+              }
+            },
+            renderer: function(token) {
+              var escaped = token.text.replace(/&/g, '&amp;').replace(/"/g, '&quot;');
+              return '<div class="math-placeholder" data-math="' + escaped + '" data-display="true"></div>';
+            }
+          },
+          {
+            name: 'mathInline',
+            level: 'inline',
+            start: function(src) { var m = src.match(/\\$/); return m ? m.index : undefined; },
+            tokenizer: function(src) {
+              var match = src.match(/^\\$([^\\$\\n]+?)\\$/);
+              if (match) {
+                return { type: 'mathInline', raw: match[0], text: match[1] };
+              }
+            },
+            renderer: function(token) {
+              var escaped = token.text.replace(/&/g, '&amp;').replace(/"/g, '&quot;');
+              return '<span class="math-placeholder" data-math="' + escaped + '" data-display="false"></span>';
+            }
+          }
+        ]
+      };
+
+      // ── Footnotes extension for marked ──────────────────────────────────────
+      // Handles [^id] references and [^id]: definition blocks.
+      var footnoteExtension = {
+        extensions: [
+          {
+            name: 'footnoteDef',
+            level: 'block',
+            start: function(src) { var m = src.match(/^\\[\\^/m); return m ? m.index : undefined; },
+            tokenizer: function(src) {
+              var match = src.match(/^\\[\\^([^\\]]+)\\]:\\s+([^\\n]+(?:\\n|$))/);
+              if (match) {
+                return { type: 'footnoteDef', raw: match[0], id: match[1], text: match[2].trim() };
+              }
+            },
+            renderer: function(token) {
+              return '<li id="fn-' + token.id + '"><p>' + token.text +
+                ' <a href="#fnref-' + token.id + '">&#8617;</a></p></li>';
+            }
+          },
+          {
+            name: 'footnoteRef',
+            level: 'inline',
+            start: function(src) { var m = src.match(/\\[\\^/); return m ? m.index : undefined; },
+            tokenizer: function(src) {
+              var match = src.match(/^\\[\\^([^\\]]+)\\]/);
+              if (match && !src.startsWith('[^' + match[1] + ']:')) {
+                return { type: 'footnoteRef', raw: match[0], id: match[1] };
+              }
+            },
+            renderer: function(token) {
+              return '<sup id="fnref-' + token.id + '"><a href="#fn-' + token.id + '">' +
+                token.id + '</a></sup>';
+            }
+          }
+        ]
+      };
 
       // marked is bundled locally — always available, no existence check needed.
       const renderer = new marked.Renderer();
@@ -372,14 +468,17 @@ export class PreviewPanel {
       };
 
       renderer.listitem = function(token) {
+        var body = this.parser.parse(token.tokens, !!token.loose);
         if (token.task) {
           const checked = token.checked ? 'checked' : '';
           return '<li class="task-list-item"><input type="checkbox" disabled ' + checked + '> ' +
-                 token.text + '</li>';
+                 body + '</li>';
         }
-        return '<li>' + token.text + '</li>';
+        return '<li>' + body + '</li>';
       };
 
+      marked.use(mathExtension);
+      marked.use(footnoteExtension);
       marked.use({ renderer, gfm: true, breaks: false, useNewRenderer: true });
     } catch (initErr) {
       console.error('InkDown: library init error', initErr);
@@ -388,7 +487,12 @@ export class PreviewPanel {
     // ── Initial render from body data attribute (base64, no CSP/postMessage) ──
     try {
       const encoded = document.body.getAttribute('data-initial');
-      if (encoded) { void renderMarkdown(atob(encoded)); }
+      if (encoded) {
+        // Decode base64 → UTF-8 correctly (atob alone mangles multi-byte chars)
+        const bytes = Uint8Array.from(atob(encoded), function(c) { return c.charCodeAt(0); });
+        const text = new TextDecoder().decode(bytes);
+        void renderMarkdown(text);
+      }
     } catch (e) {
       console.error('InkDown: initial render failed', e);
     }
