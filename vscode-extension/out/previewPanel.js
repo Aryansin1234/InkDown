@@ -69,6 +69,8 @@ class PreviewPanel {
     }
     constructor(panel, extensionUri, initialDoc) {
         this.disposables = [];
+        this.lastEditorScrollLine = -1;
+        this.ignoreEditorScroll = false;
         this.panel = panel;
         this.extensionUri = extensionUri;
         const initialMarkdown = initialDoc?.getText() ?? '';
@@ -81,6 +83,18 @@ class PreviewPanel {
                 void this.panel.webview.postMessage({ type: 'update', markdown: this.pendingMarkdown });
                 this.pendingMarkdown = undefined;
             }
+            // Scroll sync: preview scrolled → reveal line in editor
+            if (msg.type === 'scrollSync' && typeof msg.line === 'number') {
+                const editor = vscode.window.visibleTextEditors.find((e) => e.document.languageId === 'markdown' && e.viewColumn !== this.panel.viewColumn);
+                if (editor) {
+                    const line = Math.min(msg.line, editor.document.lineCount - 1);
+                    // Suppress the editor scroll event from bouncing back
+                    this.ignoreEditorScroll = true;
+                    const range = new vscode.Range(line, 0, line, 0);
+                    editor.revealRange(range, vscode.TextEditorRevealType.AtTop);
+                    setTimeout(() => { this.ignoreEditorScroll = false; }, 400);
+                }
+            }
         }), vscode.workspace.onDidChangeTextDocument((e) => {
             if (e.document === vscode.window.activeTextEditor?.document &&
                 e.document.languageId === 'markdown') {
@@ -91,6 +105,28 @@ class PreviewPanel {
                 const name = editor.document.fileName.split('/').pop() ?? 'Preview';
                 this.panel.title = `InkDown: ${name}`;
                 this.push(editor.document.getText());
+            }
+        }), 
+        // Scroll sync: editor scrolled → reveal line in preview (debounced)
+        vscode.window.onDidChangeTextEditorVisibleRanges((e) => {
+            if (this.ignoreEditorScroll) {
+                return;
+            }
+            if (e.textEditor.document.languageId === 'markdown' &&
+                e.textEditor.viewColumn !== this.panel.viewColumn &&
+                e.visibleRanges.length > 0) {
+                const topLine = e.visibleRanges[0].start.line;
+                // Only send if line actually changed
+                if (topLine === this.lastEditorScrollLine) {
+                    return;
+                }
+                this.lastEditorScrollLine = topLine;
+                if (this.scrollSyncTimer) {
+                    clearTimeout(this.scrollSyncTimer);
+                }
+                this.scrollSyncTimer = setTimeout(() => {
+                    void this.panel.webview.postMessage({ type: 'revealLine', line: topLine });
+                }, 60);
             }
         }), this.panel.onDidDispose(() => this.dispose(), null, this.disposables));
         // Embed initial markdown as base64 in a <body> data attribute — purely
@@ -178,7 +214,7 @@ class PreviewPanel {
       --heading-border: #21262d;
     }
     * { box-sizing: border-box; }
-    html { scroll-behavior: smooth; }
+    html { scroll-behavior: auto; }
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
       font-size: 15px;
@@ -315,8 +351,17 @@ class PreviewPanel {
     async function renderMarkdown(markdown) {
       spinner.classList.add('active');
       try {
-        // marked is bundled locally — always available.
-        const html = marked.parse(markdown);
+        // Tokenize and annotate with line numbers for scroll sync
+        const tokens = marked.lexer(markdown);
+        let line = 0;
+        for (var i = 0; i < tokens.length; i++) {
+          tokens[i]._line = line;
+          if (tokens[i].raw) {
+            var matches = tokens[i].raw.match(/\\n/g);
+            line += matches ? matches.length : 0;
+          }
+        }
+        const html = marked.parser(tokens);
         preview.innerHTML = typeof html === 'string' ? html : await html;
 
         renderMathPlaceholders(preview);
@@ -445,19 +490,50 @@ class PreviewPanel {
       // marked is bundled locally — always available, no existence check needed.
       const renderer = new marked.Renderer();
 
+      // Helper: returns data-line attribute string if token has line info
+      function lineAttr(token) {
+        return token._line != null ? ' data-line="' + token._line + '"' : '';
+      }
+
+      renderer.heading = function(token) {
+        const text = this.parser.parseInline(token.tokens);
+        const depth = token.depth;
+        return '<h' + depth + lineAttr(token) + '>' + text + '</h' + depth + '>';
+      };
+
+      renderer.paragraph = function(token) {
+        const text = this.parser.parseInline(token.tokens);
+        return '<p' + lineAttr(token) + '>' + text + '</p>\\n';
+      };
+
       renderer.code = function(token) {
         const code = token.text;
         const lang = (token.lang || '').toLowerCase();
+        const la = lineAttr(token);
         if (lang === 'mermaid') {
           const escaped = code.replace(/&/g, '&amp;').replace(/"/g, '&quot;');
-          return '<div class="mermaid-placeholder" data-code="' + escaped + '"></div>';
+          return '<div class="mermaid-placeholder"' + la + ' data-code="' + escaped + '"></div>';
         }
         if (typeof hljs !== 'undefined') {
           const language = hljs.getLanguage(lang) ? lang : 'plaintext';
           const highlighted = hljs.highlight(code, { language }).value;
-          return '<pre><code class="hljs language-' + language + '">' + highlighted + '</code></pre>';
+          return '<pre' + la + '><code class="hljs language-' + language + '">' + highlighted + '</code></pre>';
         }
-        return '<pre><code>' + code + '</code></pre>';
+        return '<pre' + la + '><code>' + code + '</code></pre>';
+      };
+
+      renderer.blockquote = function(token) {
+        const body = this.parser.parse(token.tokens);
+        return '<blockquote' + lineAttr(token) + '>' + body + '</blockquote>\\n';
+      };
+
+      renderer.list = function(token) {
+        const tag = token.ordered ? 'ol' : 'ul';
+        const self = this;
+        const body = token.items.map(function(item) {
+          return self.listitem(item);
+        }).join('');
+        return '<' + tag + lineAttr(token) + '>' + body + '</' + tag + '>\\n';
       };
 
       renderer.listitem = function(token) {
@@ -468,6 +544,25 @@ class PreviewPanel {
                  body + '</li>';
         }
         return '<li>' + body + '</li>';
+      };
+
+      renderer.table = function(token) {
+        var self = this;
+        var headerRow = '<tr>' + token.header.map(function(cell) {
+          var align = cell.align ? ' style="text-align:' + cell.align + '"' : '';
+          return '<th' + align + '>' + self.parser.parseInline(cell.tokens) + '</th>';
+        }).join('') + '</tr>';
+        var bodyRows = token.rows.map(function(row) {
+          return '<tr>' + row.map(function(cell) {
+            var align = cell.align ? ' style="text-align:' + cell.align + '"' : '';
+            return '<td' + align + '>' + self.parser.parseInline(cell.tokens) + '</td>';
+          }).join('') + '</tr>';
+        }).join('');
+        return '<table' + lineAttr(token) + '><thead>' + headerRow + '</thead><tbody>' + bodyRows + '</tbody></table>\\n';
+      };
+
+      renderer.hr = function(token) {
+        return '<hr' + lineAttr(token) + '>\\n';
       };
 
       marked.use(mathExtension);
@@ -490,12 +585,135 @@ class PreviewPanel {
       console.error('InkDown: initial render failed', e);
     }
 
+    // ── Scroll sync state ────────────────────────────────────────────────────
+    var isScrollingSelf = false;
+    var scrollSelfTimer = null;
+    var scrollDebounce = null;
+    var lastSyncedLine = -1;
+    var scrollAnimFrame = null;
+
+    // Helper: get sorted array of {el, line, top} for all data-line elements
+    function getLineAnchors() {
+      var elements = preview.querySelectorAll('[data-line]');
+      var anchors = [];
+      for (var i = 0; i < elements.length; i++) {
+        var line = parseInt(elements[i].getAttribute('data-line'), 10);
+        var rect = elements[i].getBoundingClientRect();
+        anchors.push({ el: elements[i], line: line, top: rect.top + window.scrollY });
+      }
+      return anchors;
+    }
+
+    // Smooth scroll to a pixel position using requestAnimationFrame
+    function smoothScrollTo(targetY, duration) {
+      if (scrollAnimFrame) { cancelAnimationFrame(scrollAnimFrame); }
+      var startY = window.scrollY;
+      var distance = targetY - startY;
+      if (Math.abs(distance) < 2) { return; }
+      var startTime = null;
+      duration = duration || 300;
+
+      function easeInOutCubic(t) {
+        return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+      }
+
+      function step(timestamp) {
+        if (!startTime) { startTime = timestamp; }
+        var elapsed = timestamp - startTime;
+        var progress = Math.min(elapsed / duration, 1);
+        var eased = easeInOutCubic(progress);
+        window.scrollTo(0, startY + distance * eased);
+        if (progress < 1) {
+          scrollAnimFrame = requestAnimationFrame(step);
+        } else {
+          scrollAnimFrame = null;
+        }
+      }
+      scrollAnimFrame = requestAnimationFrame(step);
+    }
+
     // ── Live-update listener (typing / editor switch) ─────────────────────────
     window.addEventListener('message', (event) => {
       const msg = event.data;
       if (msg.type === 'update' && typeof msg.markdown === 'string') {
         void renderMarkdown(msg.markdown);
       }
+      // Scroll sync: editor → preview (interpolated positioning)
+      if (msg.type === 'revealLine' && typeof msg.line === 'number') {
+        const target = msg.line;
+        const anchors = getLineAnchors();
+        if (anchors.length === 0) { return; }
+
+        // Find the two anchors that bracket the target line
+        var before = null;
+        var after = null;
+        for (var i = 0; i < anchors.length; i++) {
+          if (anchors[i].line <= target) {
+            before = anchors[i];
+          } else {
+            after = anchors[i];
+            break;
+          }
+        }
+
+        var scrollTarget;
+        if (!before) {
+          scrollTarget = 0;
+        } else if (!after) {
+          // Past the last anchor — scroll to it
+          scrollTarget = before.top;
+        } else {
+          // Interpolate between the two bracketing anchors
+          var lineRange = after.line - before.line;
+          var fraction = lineRange > 0 ? (target - before.line) / lineRange : 0;
+          scrollTarget = before.top + (after.top - before.top) * fraction;
+        }
+
+        isScrollingSelf = true;
+        smoothScrollTo(Math.max(0, scrollTarget - 20), 250);
+        clearTimeout(scrollSelfTimer);
+        scrollSelfTimer = setTimeout(function() { isScrollingSelf = false; }, 600);
+      }
+    });
+
+    // ── Scroll sync: preview → editor (interpolated line calculation) ─────────
+    window.addEventListener('scroll', function() {
+      if (isScrollingSelf) { return; }
+      clearTimeout(scrollDebounce);
+      scrollDebounce = setTimeout(function() {
+        var anchors = getLineAnchors();
+        if (anchors.length === 0) { return; }
+
+        var viewTop = window.scrollY + 20;
+        var before = null;
+        var after = null;
+        for (var i = 0; i < anchors.length; i++) {
+          if (anchors[i].top <= viewTop) {
+            before = anchors[i];
+          } else {
+            after = anchors[i];
+            break;
+          }
+        }
+
+        var line;
+        if (!before) {
+          line = 0;
+        } else if (!after) {
+          line = before.line;
+        } else {
+          // Interpolate fractional line between the two anchors
+          var pixelRange = after.top - before.top;
+          var fraction = pixelRange > 0 ? (viewTop - before.top) / pixelRange : 0;
+          line = Math.round(before.line + (after.line - before.line) * fraction);
+        }
+
+        // Only send if the line actually changed (reduces noise)
+        if (line !== lastSyncedLine) {
+          lastSyncedLine = line;
+          vscode.postMessage({ type: 'scrollSync', line: line });
+        }
+      }, 80);
     });
 
     // Tell the extension we are alive (so it can push a pending update if any)
