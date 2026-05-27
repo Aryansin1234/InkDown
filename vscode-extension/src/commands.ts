@@ -48,6 +48,24 @@ export function registerCommands(
   );
 }
 
+function getPandocInstallOption(): { label: string; command: string } | null {
+  switch (process.platform) {
+    case 'darwin':
+      return {
+        label: 'Install with Homebrew',
+        command: 'brew install pandoc && echo "\\n✓ Pandoc installed. Try converting again."',
+      };
+    case 'win32':
+      return {
+        label: 'Install on Windows (winget/choco)',
+        command:
+          'powershell -NoProfile -ExecutionPolicy Bypass -Command "if (Get-Command winget -ErrorAction SilentlyContinue) { winget install --id JohnMacFarlane.Pandoc -e --accept-package-agreements --accept-source-agreements } elseif (Get-Command choco -ErrorAction SilentlyContinue) { choco install pandoc -y } else { Write-Host \"Install Pandoc from https://pandoc.org/installing.html\" }"',
+      };
+    default:
+      return null;
+  }
+}
+
 async function runConvert(
   uri: vscode.Uri | undefined,
   format: 'pdf' | 'docx' | null,
@@ -117,15 +135,18 @@ async function runConvert(
     const msg = e instanceof Error ? e.message : String(e);
 
     if (msg.toLowerCase().includes('pandoc is not installed')) {
+      const installOption = getPandocInstallOption();
+      const actions = installOption
+        ? [installOption.label, 'Show Instructions']
+        : ['Show Instructions'];
       const action = await vscode.window.showErrorMessage(
         'InkDown: DOCX conversion requires Pandoc. Install it now?',
-        'Install with Homebrew',
-        'Show Instructions'
+        ...actions
       );
-      if (action === 'Install with Homebrew') {
+      if (installOption && action === installOption.label) {
         const terminal = vscode.window.createTerminal('InkDown — Install Pandoc');
         terminal.show();
-        terminal.sendText('brew install pandoc && echo "\\n✓ Pandoc installed. Try converting again."');
+        terminal.sendText(installOption.command);
       } else if (action === 'Show Instructions') {
         vscode.env.openExternal(vscode.Uri.parse('https://pandoc.org/installing.html'));
       }
