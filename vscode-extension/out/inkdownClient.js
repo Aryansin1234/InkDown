@@ -68,9 +68,23 @@ class InkDownClient {
             title,
             toc: options.toc ?? false,
             autoBreak: options.autoBreak ?? false,
+            pageSize: options.pageSize ?? 'A4',
+            landscape: options.landscape ?? false,
         };
         if (options.author) {
             body.author = options.author;
+        }
+        if (options.date) {
+            body.date = options.date;
+        }
+        if (options.watermark) {
+            body.watermark = options.watermark;
+        }
+        if (options.theme) {
+            body.theme = options.theme;
+        }
+        if (options.referenceDoc) {
+            body.referenceDoc = options.referenceDoc;
         }
         const jsonBody = JSON.stringify(body);
         const url = new URL('/api/v1/convert', serverUrl);
@@ -128,6 +142,27 @@ class InkDownClient {
         }
         if (options.title) {
             args.push('--title', options.title);
+        }
+        if (options.author) {
+            args.push('--author', options.author);
+        }
+        if (options.date) {
+            args.push('--date', options.date);
+        }
+        if (options.watermark) {
+            args.push('--watermark', options.watermark);
+        }
+        if (options.pageSize && options.pageSize !== 'A4') {
+            args.push('--page-size', options.pageSize);
+        }
+        if (options.landscape) {
+            args.push('--landscape');
+        }
+        if (options.referenceDoc) {
+            args.push('--reference-doc', options.referenceDoc);
+        }
+        if (options.theme) {
+            args.push('--theme', options.theme);
         }
         args.push('--format', options.format);
         args.push(sourcePath, outputPath);

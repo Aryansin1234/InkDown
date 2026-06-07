@@ -1,0 +1,136 @@
+/* ── Minimal Serif Theme ─────────────────────────────────────
+   A clean academic / literary look. Georgia body text,
+   restrained colours, wide margins.
+   Usage: upload via "CSS Theme" picker or set in .inkdown.json
+   ────────────────────────────────────────────────────────── */
+
+@page { size: A4; margin: 22mm 24mm 24mm 24mm; }
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html { font-size: 12pt; }
+
+body {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 12pt;
+  line-height: 1.8;
+  color: #222;
+  background: white;
+  margin: 0; padding: 0;
+  word-wrap: break-word;
+}
+
+/* ── Headings (same sans-serif for contrast) ────────────────── */
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Helvetica Neue', 'Arial', sans-serif;
+  font-weight: 700;
+  line-height: 1.25;
+  margin-top: 1.5em;
+  margin-bottom: 0.5em;
+  color: #111;
+  page-break-after: avoid;
+  break-after: avoid;
+}
+h1 { font-size: 1.9em; border-bottom: 1.5px solid #ccc; padding-bottom: 0.25em; }
+h2 { font-size: 1.4em; }
+h3 { font-size: 1.15em; }
+h4 { font-size: 1em; }
+h5, h6 { font-size: 0.9em; color: #444; }
+
+p { margin: 0 0 1em 0; orphans: 3; widows: 3; }
+
+a { color: #444; text-decoration: underline; text-underline-offset: 3px; }
+
+/* ── Code ───────────────────────────────────────────────────── */
+code {
+  font-family: 'Courier New', 'Lucida Console', monospace;
+  font-size: 0.88em;
+  background: #f5f5f5;
+  border: 1px solid #ddd;
+  padding: 0.1em 0.35em;
+  border-radius: 2px;
+}
+pre {
+  font-family: 'Courier New', monospace;
+  font-size: 10.5pt;
+  background: #f8f8f8;
+  border: 1px solid #ddd;
+  border-left: 3px solid #999;
+  padding: 14px 16px;
+  margin: 1.2em 0;
+  white-space: pre-wrap;
+  word-break: break-all;
+  page-break-inside: avoid;
+}
+pre code { background: transparent; border: none; padding: 0; }
+
+/* ── Blockquotes ─────────────────────────────────────────────── */
+blockquote {
+  font-style: italic;
+  color: #555;
+  border-left: 3px solid #ccc;
+  padding-left: 1.2em;
+  margin: 1em 2em;
+}
+
+/* ── Tables ─────────────────────────────────────────────────── */
+table { width: 100%; border-collapse: collapse; margin: 1.2em 0; font-size: 11pt; page-break-inside: avoid; }
+th {
+  font-family: 'Helvetica Neue', Arial, sans-serif;
+  font-weight: 700;
+  padding: 7px 12px;
+  border-bottom: 2px solid #222;
+  text-align: left;
+}
+td { padding: 6px 12px; border-bottom: 1px solid #ddd; vertical-align: top; }
+tr:last-child td { border-bottom: 1px solid #222; }
+
+/* ── Images ─────────────────────────────────────────────────── */
+img { max-width: 100%; height: auto; display: block; margin: 1.2em auto; page-break-inside: avoid; }
+figure { text-align: center; margin: 1.5em 0; }
+figcaption { font-size: 0.85em; color: #666; margin-top: 0.4em; font-style: italic; }
+
+/* ── Lists ──────────────────────────────────────────────────── */
+ul, ol { margin: 0 0 1em 0; padding-left: 1.8em; }
+li { margin-bottom: 0.3em; }
+
+/* ── HR ─────────────────────────────────────────────────────── */
+hr { height: 0; border: none; border-top: 1px solid #ccc; margin: 2em auto; width: 60%; }
+
+/* ── Page breaks ─────────────────────────────────────────────── */
+.page-break { page-break-after: always; break-after: page; height: 0; visibility: hidden; }
+.auto-break-h1 h1 { page-break-before: always; break-before: page; }
+.auto-break-h1 h1:first-of-type { page-break-before: avoid; break-before: avoid; }
+
+/* ── TOC ─────────────────────────────────────────────────────── */
+nav.toc {
+  background: #f9f9f9;
+  border: 1px solid #ddd;
+  padding: 18px 24px;
+  margin-bottom: 2em;
+  page-break-inside: avoid;
+  page-break-after: always;
+}
+nav.toc h2 { font-size: 1.2em; margin-top: 0; border-bottom: 1px solid #ddd; padding-bottom: 0.4em; }
+nav.toc a { color: #333; text-decoration: none; }
+nav.toc li { font-size: 0.92em; margin: 4px 0; }
+
+/* ── Cover ───────────────────────────────────────────────────── */
+.doc-cover {
+  text-align: center;
+  padding: 100px 0 60px;
+  page-break-after: always;
+  min-height: 55vh;
+}
+.doc-cover h1 { font-size: 3em; border-bottom: none; }
+.doc-cover .subtitle { color: #444; font-style: italic; font-size: 1.2em; }
+.doc-cover .meta { color: #888; font-size: 11pt; margin-top: 2em; }
+
+/* ── Footnotes ───────────────────────────────────────────────── */
+.footnotes {
+  margin-top: 3em;
+  border-top: 1px solid #ccc;
+  padding-top: 1em;
+  font-size: 9.5pt;
+  color: #555;
+}

@@ -1,8 +1,8 @@
 {
   "name": "inkdown-vscode",
-  "displayName": "InkDown — Markdown to PDF & DOCX",
-  "description": "Convert Markdown to production-quality PDF and DOCX with Mermaid diagrams, math (KaTeX), syntax highlighting, live preview, and one-click export.",
-  "version": "1.4.2",
+  "displayName": "InkDown — Markdown to PDF, DOCX & HTML",
+  "description": "Convert Markdown to production-quality PDF, DOCX, and HTML with Mermaid diagrams, math (KaTeX), syntax highlighting, live preview, and one-click export.",
+  "version": "1.5.1",
   "publisher": "inkdown",
   "license": "MIT",
   "icon": "icon.png",
@@ -60,6 +60,11 @@
         "icon": "$(file-text)"
       },
       {
+        "command": "inkdown.convertToHtml",
+        "title": "InkDown: Export as HTML",
+        "icon": "$(globe)"
+      },
+      {
         "command": "inkdown.convertWithOptions",
         "title": "InkDown: Convert with Options…"
       },
@@ -75,6 +80,15 @@
       {
         "command": "inkdown.stopServer",
         "title": "InkDown: Stop Server"
+      },
+      {
+        "command": "inkdown.batchExportFolder",
+        "title": "InkDown: Export all Markdown files in folder",
+        "icon": "$(folder-active)"
+      },
+      {
+        "command": "inkdown.toggleAutoExport",
+        "title": "InkDown: Toggle Auto-Export on Save"
       }
     ],
     "menus": {
@@ -107,9 +121,14 @@
           "group": "navigation@3"
         },
         {
-          "command": "inkdown.convertWithOptions",
+          "command": "inkdown.convertToHtml",
           "when": "editorLangId == markdown",
           "group": "navigation@4"
+        },
+        {
+          "command": "inkdown.convertWithOptions",
+          "when": "editorLangId == markdown",
+          "group": "navigation@5"
         }
       ],
       "explorer/context": [
@@ -129,12 +148,54 @@
           "group": "navigation@3"
         },
         {
-          "command": "inkdown.convertWithOptions",
+          "command": "inkdown.convertToHtml",
           "when": "resourceLangId == markdown",
           "group": "navigation@4"
+        },
+        {
+          "command": "inkdown.convertWithOptions",
+          "when": "resourceLangId == markdown",
+          "group": "navigation@5"
+        },
+        {
+          "command": "inkdown.batchExportFolder",
+          "when": "explorerResourceIsFolder",
+          "group": "7_modification"
         }
       ]
     },
+    "snippets": [
+      {
+        "language": "markdown",
+        "path": "./snippets/inkdown.code-snippets"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "inkdown.convertToPdf",
+        "key": "ctrl+shift+alt+p",
+        "mac": "cmd+shift+alt+p",
+        "when": "resourceLangId == markdown"
+      },
+      {
+        "command": "inkdown.convertToDocx",
+        "key": "ctrl+shift+alt+d",
+        "mac": "cmd+shift+alt+d",
+        "when": "resourceLangId == markdown"
+      },
+      {
+        "command": "inkdown.convertToHtml",
+        "key": "ctrl+shift+alt+h",
+        "mac": "cmd+shift+alt+h",
+        "when": "resourceLangId == markdown"
+      },
+      {
+        "command": "inkdown.openPreview",
+        "key": "ctrl+shift+alt+v",
+        "mac": "cmd+shift+alt+v",
+        "when": "resourceLangId == markdown"
+      }
+    ],
     "configuration": {
       "title": "InkDown",
       "properties": {
@@ -163,7 +224,8 @@
           "default": "pdf",
           "enum": [
             "pdf",
-            "docx"
+            "docx",
+            "html"
           ],
           "description": "Default output format."
         },
@@ -171,6 +233,21 @@
           "type": "boolean",
           "default": true,
           "description": "Open the converted file after successful conversion."
+        },
+        "inkdown.autoExport": {
+          "type": "boolean",
+          "default": false,
+          "description": "Automatically re-export to the last-used format whenever a Markdown file is saved."
+        },
+        "inkdown.autoExportFormat": {
+          "type": "string",
+          "default": "pdf",
+          "enum": [
+            "pdf",
+            "docx",
+            "html"
+          ],
+          "description": "Format to use for auto-export on save."
         },
         "inkdown.defaultToc": {
           "type": "boolean",

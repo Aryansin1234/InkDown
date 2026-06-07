@@ -1,0 +1,159 @@
+{
+  "Mermaid Flowchart": {
+    "prefix": ["mermaid-flowchart", "flow"],
+    "body": [
+      "```mermaid",
+      "flowchart ${1|TD,LR,RL,BT|}",
+      "    A[${2:Start}] --> B{${3:Decision}}",
+      "    B -->|${4:Yes}| C[${5:Action}]",
+      "    B -->|${6:No}| D[${7:End}]",
+      "```"
+    ],
+    "description": "Mermaid flowchart diagram"
+  },
+  "Mermaid Sequence Diagram": {
+    "prefix": ["mermaid-sequence", "seq"],
+    "body": [
+      "```mermaid",
+      "sequenceDiagram",
+      "    participant ${1:A}",
+      "    participant ${2:B}",
+      "    ${1:A}->>${2:B}: ${3:Message}",
+      "    ${2:B}-->>${1:A}: ${4:Response}",
+      "```"
+    ],
+    "description": "Mermaid sequence diagram"
+  },
+  "Mermaid ER Diagram": {
+    "prefix": ["mermaid-er", "erd"],
+    "body": [
+      "```mermaid",
+      "erDiagram",
+      "    ${1:ENTITY_A} {",
+      "        string ${2:field1}",
+      "        int    ${3:field2}",
+      "    }",
+      "    ${4:ENTITY_B} {",
+      "        string ${5:name}",
+      "    }",
+      "    ${1:ENTITY_A} ||--o{ ${4:ENTITY_B} : \"${6:has}\"",
+      "```"
+    ],
+    "description": "Mermaid ER diagram"
+  },
+  "Mermaid Gantt Chart": {
+    "prefix": ["mermaid-gantt", "gantt"],
+    "body": [
+      "```mermaid",
+      "gantt",
+      "    title ${1:Project Timeline}",
+      "    dateFormat YYYY-MM-DD",
+      "    section ${2:Phase 1}",
+      "        ${3:Task A} : ${4:2024-01-01}, ${5:7d}",
+      "        ${6:Task B} : after ${3:Task A}, ${7:5d}",
+      "```"
+    ],
+    "description": "Mermaid Gantt chart"
+  },
+  "Mermaid State Diagram": {
+    "prefix": ["mermaid-state", "state"],
+    "body": [
+      "```mermaid",
+      "stateDiagram-v2",
+      "    [*] --> ${1:Idle}",
+      "    ${1:Idle} --> ${2:Active} : ${3:start}",
+      "    ${2:Active} --> ${1:Idle} : ${4:stop}",
+      "    ${2:Active} --> [*] : ${5:finish}",
+      "```"
+    ],
+    "description": "Mermaid state diagram"
+  },
+  "Mermaid Class Diagram": {
+    "prefix": ["mermaid-class", "class"],
+    "body": [
+      "```mermaid",
+      "classDiagram",
+      "    class ${1:Animal} {",
+      "        +String ${2:name}",
+      "        +${3:speak}()",
+      "    }",
+      "    class ${4:Dog} {",
+      "        +${5:bark}()",
+      "    }",
+      "    ${1:Animal} <|-- ${4:Dog}",
+      "```"
+    ],
+    "description": "Mermaid class diagram"
+  },
+  "Mermaid Pie Chart": {
+    "prefix": ["mermaid-pie", "pie"],
+    "body": [
+      "```mermaid",
+      "pie title ${1:Distribution}",
+      "    \"${2:Category A}\" : ${3:40}",
+      "    \"${4:Category B}\" : ${5:35}",
+      "    \"${6:Category C}\" : ${7:25}",
+      "```"
+    ],
+    "description": "Mermaid pie chart"
+  },
+  "Mermaid Mindmap": {
+    "prefix": ["mermaid-mindmap", "mindmap"],
+    "body": [
+      "```mermaid",
+      "mindmap",
+      "  root(${1:Central Topic})",
+      "    ${2:Branch 1}",
+      "      ${3:Leaf 1}",
+      "      ${4:Leaf 2}",
+      "    ${5:Branch 2}",
+      "      ${6:Leaf 3}",
+      "```"
+    ],
+    "description": "Mermaid mindmap"
+  },
+  "KaTeX Inline Math": {
+    "prefix": ["math-inline", "katex"],
+    "body": ["\\$$1\\$"],
+    "description": "Inline KaTeX math expression"
+  },
+  "KaTeX Block Math": {
+    "prefix": ["math-block", "katex-block"],
+    "body": [
+      "$$",
+      "${1:equation}",
+      "$$"
+    ],
+    "description": "Block KaTeX math equation"
+  },
+  "KaTeX Fraction": {
+    "prefix": "fraction",
+    "body": ["\\$\\\\frac{${1:numerator}}{${2:denominator}}\\$"],
+    "description": "KaTeX fraction"
+  },
+  "KaTeX Sum": {
+    "prefix": "summation",
+    "body": ["\\$\\\\sum_{${1:i=0}}^{${2:n}} ${3:x_i}\\$"],
+    "description": "KaTeX summation"
+  },
+  "InkDown Frontmatter": {
+    "prefix": ["frontmatter", "inkdown-fm"],
+    "body": [
+      "---",
+      "title: \"${1:Document Title}\"",
+      "author: \"${2:Author Name}\"",
+      "date: \"${3:${CURRENT_YEAR}-${CURRENT_MONTH}-${CURRENT_DATE}}\"",
+      "toc: ${4|false,true|}",
+      "pageSize: ${5|A4,Letter,A3,A5,Legal|}",
+      "---",
+      "",
+      "$0"
+    ],
+    "description": "InkDown YAML frontmatter block"
+  },
+  "Page Break": {
+    "prefix": ["pagebreak", "pb"],
+    "body": ["<!-- pagebreak -->"],
+    "description": "InkDown manual page break"
+  }
+}
