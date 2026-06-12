@@ -23,6 +23,20 @@ export interface ConvertOptions {
 export class InkDownClient {
   constructor(private readonly serverManager: ServerManager) {}
 
+  /** Returns the path to the bundled themes directory, or null if not found. */
+  async getThemesDir(): Promise<string | null> {
+    const inkdownPath = await this.serverManager.getInkDownPath();
+    if (!inkdownPath) { return null; }
+    const candidates = [
+      path.join(inkdownPath, 'samples', 'themes'),
+      path.join(inkdownPath, 'themes'),
+    ];
+    for (const p of candidates) {
+      if (fs.existsSync(p)) { return p; }
+    }
+    return null;
+  }
+
   async convert(
     sourcePath: string,
     outputPath: string,

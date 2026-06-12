@@ -1,0 +1,158 @@
+/* ── Academic / LaTeX-inspired Theme ────────────────────────
+   Mimics the look of typeset academic papers. Justified body
+   text, classic serif, numbered-section feel.
+   Usage: upload via "CSS Theme" picker or set in .inkdown.json
+   ────────────────────────────────────────────────────────── */
+
+@page { size: A4; margin: 25mm 22mm 25mm 22mm; }
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html { font-size: 11pt; }
+
+body {
+  font-family: 'Linux Libertine', 'Palatino Linotype', 'Book Antiqua', 'Palatino', Georgia, serif;
+  font-size: 11pt;
+  line-height: 1.75;
+  color: #111;
+  background: white;
+  margin: 0; padding: 0;
+  word-wrap: break-word;
+  text-align: justify;
+  hyphens: auto;
+}
+
+/* ── Headings ───────────────────────────────────────────────── */
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Linux Libertine', 'Palatino Linotype', Georgia, serif;
+  font-weight: 700;
+  line-height: 1.3;
+  margin-bottom: 0.4em;
+  color: #111;
+  text-align: left;
+  page-break-after: avoid;
+  break-after: avoid;
+  hyphens: none;
+}
+h1 { font-size: 1.7em; text-align: center; margin-top: 0.8em; letter-spacing: -0.01em; }
+h2 { font-size: 1.25em; margin-top: 1.8em; border-bottom: 1px solid #bbb; padding-bottom: 0.1em; }
+h3 { font-size: 1.1em; font-style: italic; font-weight: 700; margin-top: 1.4em; }
+h4 { font-size: 1em; font-style: italic; font-weight: 400; margin-top: 1.2em; }
+h5, h6 { font-size: 0.95em; color: #444; margin-top: 1em; }
+
+/* ── Abstract (blockquote used as abstract) ─────────────────── */
+p { margin: 0 0 0.85em 0; orphans: 3; widows: 3; }
+
+a { color: #111; text-decoration: none; border-bottom: 1px dotted #999; }
+
+/* ── Code ───────────────────────────────────────────────────── */
+code {
+  font-family: 'Courier New', 'Lucida Console', monospace;
+  font-size: 0.87em;
+  background: #f5f5f5;
+  padding: 0.1em 0.3em;
+  border-radius: 2px;
+}
+pre {
+  font-family: 'Courier New', monospace;
+  font-size: 9.5pt;
+  background: #f9f9f9;
+  border: 1px solid #d8d8d8;
+  padding: 12px 16px;
+  margin: 1.2em 4em;
+  white-space: pre-wrap;
+  word-break: break-all;
+  page-break-inside: avoid;
+  text-align: left;
+}
+pre code { background: transparent; padding: 0; }
+
+/* ── Blockquotes (used as abstract / pull-quote) ────────────── */
+blockquote {
+  font-size: 10.5pt;
+  color: #333;
+  border-left: none;
+  padding: 0.4em 2em;
+  margin: 1em 3em;
+  font-style: italic;
+  background: #fafafa;
+  border: 1px solid #ddd;
+}
+blockquote p { margin: 0; }
+
+/* ── Tables ─────────────────────────────────────────────────── */
+table {
+  width: 80%;
+  border-collapse: collapse;
+  margin: 1.5em auto;
+  font-size: 10pt;
+  page-break-inside: avoid;
+}
+caption {
+  font-size: 9.5pt;
+  font-style: italic;
+  text-align: center;
+  margin-bottom: 4px;
+  color: #555;
+}
+th {
+  font-weight: 700;
+  padding: 5px 12px;
+  border-top: 2px solid #111;
+  border-bottom: 1px solid #111;
+  text-align: center;
+}
+td { padding: 4px 12px; border-bottom: none; vertical-align: top; text-align: left; }
+tbody tr:last-child td { border-bottom: 1.5px solid #111; }
+
+/* ── Images ─────────────────────────────────────────────────── */
+img { max-width: 80%; height: auto; display: block; margin: 1.5em auto; page-break-inside: avoid; }
+figure { text-align: center; margin: 1.5em 0; }
+figcaption { font-size: 9.5pt; color: #555; margin-top: 0.4em; font-style: italic; text-align: center; }
+
+/* ── Lists ──────────────────────────────────────────────────── */
+ul, ol { margin: 0 0 0.9em 0; padding-left: 2em; text-align: left; }
+li { margin-bottom: 0.2em; }
+
+/* ── HR ─────────────────────────────────────────────────────── */
+hr { width: 50%; margin: 2em auto; border: none; border-top: 1px solid #999; }
+
+/* ── Page breaks ─────────────────────────────────────────────── */
+.page-break { page-break-after: always; break-after: page; height: 0; visibility: hidden; }
+.auto-break-h1 h1 { page-break-before: always; break-before: page; }
+.auto-break-h1 h1:first-of-type { page-break-before: avoid; break-before: avoid; }
+
+/* ── TOC ─────────────────────────────────────────────────────── */
+nav.toc {
+  border: 1px solid #ccc;
+  padding: 16px 24px;
+  margin-bottom: 2em;
+  font-size: 10pt;
+  page-break-inside: avoid;
+  page-break-after: always;
+  background: #fafafa;
+}
+nav.toc h2 { font-size: 1.1em; text-align: center; border-bottom: 1px solid #ccc; padding-bottom: 0.3em; margin: 0 0 10px 0; }
+nav.toc a { color: #111; border-bottom: none; }
+nav.toc li { margin: 4px 0; }
+
+/* ── Cover / title area ──────────────────────────────────────── */
+.doc-cover {
+  text-align: center;
+  padding: 80px 0 60px;
+  page-break-after: always;
+  min-height: 50vh;
+}
+.doc-cover h1 { font-size: 2em; border-bottom: none; }
+.doc-cover .subtitle { color: #333; font-style: italic; font-size: 1.15em; }
+.doc-cover .meta { color: #666; font-size: 10pt; margin-top: 2em; }
+
+/* ── Footnotes ───────────────────────────────────────────────── */
+.footnotes {
+  margin-top: 3em;
+  border-top: 1px solid #999;
+  padding-top: 0.8em;
+  font-size: 9pt;
+  color: #444;
+  text-align: left;
+}

@@ -44,6 +44,23 @@ class InkDownClient {
     constructor(serverManager) {
         this.serverManager = serverManager;
     }
+    /** Returns the path to the bundled themes directory, or null if not found. */
+    async getThemesDir() {
+        const inkdownPath = await this.serverManager.getInkDownPath();
+        if (!inkdownPath) {
+            return null;
+        }
+        const candidates = [
+            path.join(inkdownPath, 'samples', 'themes'),
+            path.join(inkdownPath, 'themes'),
+        ];
+        for (const p of candidates) {
+            if (fs.existsSync(p)) {
+                return p;
+            }
+        }
+        return null;
+    }
     async convert(sourcePath, outputPath, options, progress) {
         progress?.report({ message: 'Checking server…' });
         const serverRunning = await this.serverManager.isRunning();

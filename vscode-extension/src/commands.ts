@@ -1,7 +1,6 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
-import * as cp from 'child_process';
 import { InkDownClient, ConvertOptions } from './inkdownClient';
 import { PreviewPanel } from './previewPanel';
 import { ServerManager } from './serverManager';
@@ -177,7 +176,7 @@ async function runConvert(
   };
 
   if (promptOptions) {
-    const picked = await gatherOptions(options, sourcePath);
+    const picked = await gatherOptions(options, sourcePath, client);
     if (!picked) { return; }
     options = picked;
   }
@@ -293,9 +292,135 @@ function upsertFrontmatter(
 }
 
 // ── gatherOptions wizard ────────────────────────────────────────────────
+
+/** Full metadata for each bundled theme — used to build rich QuickPick items. */
+interface BundledThemeMeta {
+  name: string;
+  description: string;
+  file: string;
+  font: string;
+  palette: string;
+  useCase: string;
+}
+
+const BUNDLED_THEMES: BundledThemeMeta[] = [
+  {
+    name: 'Default',
+    description: 'Clean GitHub-inspired stylesheet',
+    file: '',
+    font: 'System sans-serif / Inter',
+    palette: 'Black & grey · White background',
+    useCase: 'General purpose',
+  },
+  {
+    name: 'Modern',
+    description: 'Teal accents, generous whitespace',
+    file: 'modern.css',
+    font: 'Inter / DM Sans',
+    palette: 'Teal #0d9488 · White background',
+    useCase: 'Product docs & handbooks',
+  },
+  {
+    name: 'Academic',
+    description: 'Justified serif, LaTeX-inspired',
+    file: 'academic.css',
+    font: 'Palatino / Georgia  (serif)',
+    palette: 'Dark ink · White background',
+    useCase: 'Research papers & formal reports',
+  },
+  {
+    name: 'Corporate',
+    description: 'Professional business look',
+    file: 'corporate.css',
+    font: 'Calibri / Segoe UI',
+    palette: 'Navy #1a1a2e · Grey accents',
+    useCase: 'Business reports & proposals',
+  },
+  {
+    name: 'Dark',
+    description: 'Dark background, easy on the eyes',
+    file: 'dark.css',
+    font: 'JetBrains Mono / Fira Code',
+    palette: 'Cyan #64ffda · Near-black background',
+    useCase: 'Code-heavy docs & night reading',
+  },
+  {
+    name: 'Warm',
+    description: 'Amber tones, inviting feel',
+    file: 'warm.css',
+    font: 'Lora / Georgia  (serif)',
+    palette: 'Amber #b45309 · Cream background',
+    useCase: 'Essays & creative writing',
+  },
+  {
+    name: 'Minimal',
+    description: 'Stripped-back, timeless serif',
+    file: 'minimal.css',
+    font: 'Georgia / Cambria  (serif)',
+    palette: 'Near-black · Pure white background',
+    useCase: 'Clean professional documents',
+  },
+];
+
+interface ThemeItem extends vscode.QuickPickItem {
+  themePath?: string | undefined;
+  isBrowse?: boolean;
+}
+
+async function pickTheme(
+  client: InkDownClient,
+  current: string | undefined,
+  title: string
+): Promise<string | undefined | null> {
+  const themesDir = await client.getThemesDir();
+
+  const items: ThemeItem[] = BUNDLED_THEMES.map((t) => {
+    const fullPath = themesDir && t.file ? path.join(themesDir, t.file) : undefined;
+    const isActive = t.file === '' ? !current : current === fullPath;
+    return {
+      label: `$(paintcan) ${t.name}`,
+      description: t.palette,
+      detail: `${t.description}  ·  Font: ${t.font}  ·  Best for: ${t.useCase}`,
+      picked: isActive,
+      themePath: fullPath,
+      isBrowse: false,
+    };
+  });
+
+  items.push({ label: 'Custom', kind: vscode.QuickPickItemKind.Separator });
+  items.push({
+    label: '$(file-code) Browse for CSS…',
+    description: 'Select a custom .css file from disk',
+    detail: 'Upload any stylesheet to fully control the document appearance',
+    themePath: undefined,
+    isBrowse: true,
+  });
+
+  const pick = await vscode.window.showQuickPick<ThemeItem>(items, {
+    placeHolder: 'Choose a CSS theme for the output document',
+    title,
+    matchOnDescription: true,
+    matchOnDetail: true,
+  });
+
+  if (!pick) { return null; }
+
+  if (pick.isBrowse) {
+    const files = await vscode.window.showOpenDialog({
+      canSelectMany: false,
+      filters: { 'CSS files': ['css'] },
+      title: 'Select a custom CSS theme',
+    });
+    return files?.[0]?.fsPath;
+  }
+
+  return pick.themePath;
+}
+
 async function gatherOptions(
   defaults: ConvertOptions,
-  sourcePath: string
+  sourcePath: string,
+  client: InkDownClient
 ): Promise<ConvertOptions | undefined> {
   // ── Step 1: Format ──────────────────────────────────────────
   const formatItems: FormatItem[] = [
@@ -366,27 +491,10 @@ async function gatherOptions(
     if (!sizePick) { return undefined; }
     pageSize = sizePick.label;
 
-    // Optional custom CSS theme
-    const themeItems = [
-      { label: '$(paintcan) Default styles',      description: 'Use the built-in InkDown stylesheet', picked: !theme },
-      { label: '$(file-code) Browse for CSS…',    description: 'Upload a custom .css theme file' },
-      ...(theme ? [{ label: `$(check) Keep current: ${path.basename(theme)}`, description: theme, picked: true }] : []),
-    ];
-    const themePick = await vscode.window.showQuickPick(themeItems, {
-      placeHolder: 'Select CSS theme',
-      title: 'InkDown — Step 3b: CSS Theme (PDF)',
-    });
-    if (!themePick) { return undefined; }
-    if (themePick.label.includes('Browse')) {
-      const picked = await vscode.window.showOpenDialog({
-        canSelectMany: false,
-        filters: { 'CSS files': ['css'] },
-        title: 'Select a custom CSS theme',
-      });
-      if (picked && picked[0]) { theme = picked[0].fsPath; }
-    } else if (themePick.label.includes('Default')) {
-      theme = undefined;
-    }
+    // CSS theme
+    const pickedTheme = await pickTheme(client, theme, 'InkDown — Step 3b: CSS Theme  (PDF · 7 bundled styles)');
+    if (pickedTheme === null) { return undefined; }
+    theme = pickedTheme;
 
   } else if (formatPick.value === 'docx') {
     // DOCX reference template
@@ -414,47 +522,14 @@ async function gatherOptions(
       referenceDoc = undefined;
     }
 
-    // Optional custom CSS theme for DOCX (applied to embedded HTML rendering)
-    const themeItems2 = [
-      { label: '$(paintcan) Default styles',    description: 'Use built-in InkDown stylesheet', picked: !theme },
-      { label: '$(file-code) Browse for CSS…', description: 'Upload a custom .css theme file' },
-    ];
-    const themePick2 = await vscode.window.showQuickPick(themeItems2, {
-      placeHolder: 'Select CSS theme (for DOCX rendering)',
-      title: 'InkDown — Step 3b: CSS Theme (DOCX)',
-    });
-    if (!themePick2) { return undefined; }
-    if (themePick2.label.includes('Browse')) {
-      const picked = await vscode.window.showOpenDialog({
-        canSelectMany: false,
-        filters: { 'CSS files': ['css'] },
-        title: 'Select a custom CSS theme',
-      });
-      if (picked && picked[0]) { theme = picked[0].fsPath; }
-    }
+    // CSS does not apply to DOCX — Pandoc uses Word styles from the reference template above.
+    theme = undefined;
 
   } else {
-    // HTML: only CSS theme picker
-    const themeItems = [
-      { label: '$(paintcan) Default styles',    description: 'Use built-in InkDown stylesheet', picked: !theme },
-      { label: '$(file-code) Browse for CSS…', description: 'Upload a custom .css theme file' },
-      ...(theme ? [{ label: `$(check) Keep current: ${path.basename(theme)}`, description: theme, picked: true }] : []),
-    ];
-    const themePick = await vscode.window.showQuickPick(themeItems, {
-      placeHolder: 'Select CSS theme',
-      title: 'InkDown — Step 3: CSS Theme (HTML)',
-    });
-    if (!themePick) { return undefined; }
-    if (themePick.label.includes('Browse')) {
-      const picked = await vscode.window.showOpenDialog({
-        canSelectMany: false,
-        filters: { 'CSS files': ['css'] },
-        title: 'Select a custom CSS theme',
-      });
-      if (picked && picked[0]) { theme = picked[0].fsPath; }
-    } else if (themePick.label.includes('Default')) {
-      theme = undefined;
-    }
+    // HTML: CSS theme picker
+    const pickedThemeHtml = await pickTheme(client, theme, 'InkDown — Step 3: CSS Theme  (HTML · 7 bundled styles)');
+    if (pickedThemeHtml === null) { return undefined; }
+    theme = pickedThemeHtml;
   }
 
   // ── Step 4: General options ─────────────────────────────────
