@@ -1,54 +1,111 @@
 /* ── Page Setup ─────────────────────────────────────────────── */
 @page {
   size: A4;
-  margin: 20mm 18mm 22mm 18mm;
+  margin: 22mm 20mm 24mm 20mm;
 }
 
-/* ── Base ───────────────────────────────────────────────────── */
+@page :first {
+  margin-top: 0;
+}
+
+/* ── Reset & Box Model ──────────────────────────────────────── */
 *, *::before, *::after {
   box-sizing: border-box;
 }
 
+/* ── Base ───────────────────────────────────────────────────── */
 html {
   font-size: 14px;
+  -webkit-text-size-adjust: 100%;
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', Roboto,
+               Helvetica, Arial, sans-serif;
   font-size: 14px;
-  line-height: 1.65;
-  color: #24292e;
-  background: white;
+  line-height: 1.7;
+  color: #1a1f2e;
+  background: #ffffff;
   margin: 0;
   padding: 0;
-  /* Prevent any element from causing horizontal overflow */
   overflow-x: hidden;
   max-width: 100%;
   word-wrap: break-word;
   overflow-wrap: break-word;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
 }
 
 /* ── Headings ───────────────────────────────────────────────── */
-h1 { font-size: 2em;   border-bottom: 2px solid #e1e4e8; padding-bottom: 0.3em; margin-top: 1.4em; }
-h2 { font-size: 1.5em; border-bottom: 1px solid #e1e4e8; padding-bottom: 0.3em; margin-top: 1.3em; }
-h3 { font-size: 1.25em; margin-top: 1.2em; }
-h4 { font-size: 1em;   margin-top: 1.1em; }
-h5 { font-size: 0.875em; margin-top: 1em; }
-h6 { font-size: 0.85em;  color: #6a737d;  margin-top: 1em; }
+h1 {
+  font-size: 2.1em;
+  font-weight: 700;
+  color: #111827;
+  border-bottom: 2.5px solid #e5e7eb;
+  padding-bottom: 0.35em;
+  margin-top: 1.6em;
+  margin-bottom: 0.6em;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+h2 {
+  font-size: 1.5em;
+  font-weight: 600;
+  color: #1f2937;
+  border-bottom: 1px solid #e5e7eb;
+  padding-bottom: 0.3em;
+  margin-top: 1.5em;
+  margin-bottom: 0.5em;
+  line-height: 1.25;
+}
+
+h3 {
+  font-size: 1.2em;
+  font-weight: 600;
+  color: #374151;
+  margin-top: 1.3em;
+  margin-bottom: 0.4em;
+  line-height: 1.3;
+}
+
+h4 {
+  font-size: 1.05em;
+  font-weight: 600;
+  color: #4b5563;
+  margin-top: 1.2em;
+  margin-bottom: 0.4em;
+}
+
+h5 {
+  font-size: 0.9em;
+  font-weight: 600;
+  color: #6b7280;
+  margin-top: 1.1em;
+  margin-bottom: 0.3em;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+h6 {
+  font-size: 0.85em;
+  font-weight: 600;
+  color: #9ca3af;
+  margin-top: 1em;
+  margin-bottom: 0.3em;
+}
 
 h1, h2, h3, h4, h5, h6 {
-  font-weight: 600;
-  line-height: 1.25;
-  margin-bottom: 0.5em;
-  /* Never break right after a heading */
   page-break-after: avoid;
   break-after: avoid;
 }
 
-/* First heading on page shouldn't have giant top margin */
-h1:first-child, h2:first-child { margin-top: 0; }
+h1:first-child,
+h2:first-child {
+  margin-top: 0;
+}
 
-/* ── Paragraphs & text ──────────────────────────────────────── */
+/* ── Paragraphs & Inline ────────────────────────────────────── */
 p {
   margin: 0 0 1em 0;
   orphans: 3;
@@ -56,132 +113,179 @@ p {
 }
 
 a {
-  color: #0366d6;
+  color: #2563eb;
   text-decoration: none;
 }
 
-a:hover { text-decoration: underline; }
+a:hover {
+  text-decoration: underline;
+}
 
-strong { font-weight: 600; }
-em     { font-style: italic; }
+strong {
+  font-weight: 700;
+  color: #111827;
+}
 
+em {
+  font-style: italic;
+}
+
+mark {
+  background: #fef08a;
+  color: inherit;
+  padding: 0 0.2em;
+  border-radius: 2px;
+}
+
+abbr[title] {
+  border-bottom: 1px dotted #6b7280;
+  cursor: help;
+}
+
+/* ── Blockquotes ────────────────────────────────────────────── */
 blockquote {
-  border-left: 4px solid #dfe2e5;
-  padding: 0 1em;
-  color: #6a737d;
-  margin: 1em 0;
+  border-left: 4px solid #d1d5db;
+  background: #f9fafb;
+  padding: 0.75em 1.25em;
+  color: #4b5563;
+  margin: 1.2em 0;
+  border-radius: 0 6px 6px 0;
   page-break-inside: avoid;
   break-inside: avoid;
 }
 
+blockquote p:last-child {
+  margin-bottom: 0;
+}
+
+blockquote cite {
+  display: block;
+  margin-top: 0.5em;
+  font-size: 0.875em;
+  color: #9ca3af;
+  font-style: normal;
+}
+
+blockquote cite::before {
+  content: '— ';
+}
+
+/* ── Horizontal Rule ────────────────────────────────────────── */
 hr {
-  height: 2px;
-  background: #e1e4e8;
+  height: 1px;
+  background: #e5e7eb;
   border: none;
-  margin: 1.5em 0;
+  margin: 2em 0;
 }
 
 /* ── Code ───────────────────────────────────────────────────── */
-
-/* Inline code */
 code {
-  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
-  font-size: 0.875em;
-  padding: 0.2em 0.4em;
-  background: #f6f8fa;
-  border-radius: 3px;
-  /* Prevent inline code from blowing out line width */
+  font-family: 'SFMono-Regular', 'JetBrains Mono', Consolas, 'Liberation Mono',
+               Menlo, 'Courier New', monospace;
+  font-size: 0.85em;
+  padding: 0.2em 0.45em;
+  background: #f3f4f6;
+  border: 1px solid #e5e7eb;
+  border-radius: 4px;
+  color: #374151;
   word-break: break-word;
 }
 
-/* Block code */
 pre {
-  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  font-family: 'SFMono-Regular', 'JetBrains Mono', Consolas, 'Liberation Mono',
+               Menlo, 'Courier New', monospace;
   font-size: 12px;
-  line-height: 1.5;
-  background: #f6f8fa;
-  border: 1px solid #e1e4e8;
-  border-radius: 6px;
-  padding: 12px 16px;
-  margin: 1em 0;
-
-  /* ── Overflow prevention (the main fix) ── */
+  line-height: 1.6;
+  background: #f8f9fb;
+  border: 1px solid #e5e7eb;
+  border-left: 4px solid #d1d5db;
+  border-radius: 0 6px 6px 0;
+  padding: 14px 18px;
+  margin: 1.2em 0;
   max-width: 100%;
-  overflow-x: hidden;       /* clip rather than scroll in print */
-  white-space: pre-wrap;    /* wrap long lines */
-  word-break: break-all;    /* break unbreakable tokens */
+  overflow-x: hidden;
+  white-space: pre-wrap;
+  word-break: break-all;
   overflow-wrap: break-word;
-
-  /* Never split a code block across pages */
   page-break-inside: avoid;
   break-inside: avoid;
 }
 
-/* Remove double background from hljs inside pre */
 pre code {
   background: transparent;
+  border: none;
   padding: 0;
   border-radius: 0;
   font-size: inherit;
+  color: inherit;
   word-break: inherit;
   white-space: inherit;
 }
 
 /* ── Tables ─────────────────────────────────────────────────── */
+.table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+}
+
 table {
   width: 100%;
   border-collapse: collapse;
-  margin: 1em 0;
+  margin: 1.2em 0;
   font-size: 13px;
-
-  /* Scale down automatically before overflowing */
   table-layout: auto;
-
-  /* Never split across pages */
   page-break-inside: avoid;
   break-inside: avoid;
 }
 
 thead {
-  background: #f6f8fa;
-  border-bottom: 2px solid #e1e4e8;
+  background: #f3f4f6;
+  border-bottom: 2px solid #d1d5db;
 }
 
 th {
   font-weight: 600;
-  padding: 8px 12px;
-  border: 1px solid #e1e4e8;
+  font-size: 12px;
+  padding: 10px 14px;
+  border: 1px solid #e5e7eb;
   text-align: left;
-  /* Wrap long headers rather than blow out column width */
+  color: #374151;
   word-break: break-word;
   overflow-wrap: break-word;
+  white-space: nowrap;
 }
 
 td {
-  padding: 6px 12px;
-  border: 1px solid #e1e4e8;
+  padding: 8px 14px;
+  border: 1px solid #e5e7eb;
   vertical-align: top;
-  /* Hard wrap anything that won't break on its own */
+  color: #4b5563;
   word-break: break-word;
   overflow-wrap: break-word;
 }
 
-tr:nth-child(even) { background: #f9fafb; }
+tr:nth-child(even) td {
+  background: #f9fafb;
+}
+
+tbody tr:hover td {
+  background: #f3f4f6;
+}
 
 /* ── Images ─────────────────────────────────────────────────── */
 img {
   max-width: 100%;
   height: auto;
   display: block;
-  margin: 1em auto;
-  /* Never split an image across pages */
+  margin: 1.2em auto;
   page-break-inside: avoid;
   break-inside: avoid;
+  border-radius: 4px;
 }
 
 figure {
   max-width: 100%;
-  margin: 1em 0;
+  margin: 1.4em 0;
   text-align: center;
   page-break-inside: avoid;
   break-inside: avoid;
@@ -189,8 +293,9 @@ figure {
 
 figcaption {
   font-size: 12px;
-  color: #6a737d;
-  margin-top: 0.4em;
+  color: #6b7280;
+  margin-top: 0.5em;
+  font-style: italic;
 }
 
 /* ── Lists ──────────────────────────────────────────────────── */
@@ -200,97 +305,16 @@ ul, ol {
 }
 
 li {
-  margin-bottom: 0.3em;
+  margin-bottom: 0.35em;
   orphans: 2;
   widows: 2;
+  color: #374151;
 }
 
-li > ul, li > ol { margin-bottom: 0; }
-
-/* ── Page-break helpers ─────────────────────────────────────── */
-
-/* Explicit manual break: <!-- pagebreak --> becomes this */
-.page-break {
-  page-break-after: always;
-  break-after: page;
-  height: 0;
-  margin: 0;
-  visibility: hidden;
-}
-
-/* Auto break before every top-level heading (h1 only by default) */
-.auto-break-h1 h1 { page-break-before: always; break-before: page; }
-.auto-break-h1 h1:first-of-type { page-break-before: avoid; break-before: avoid; }
-
-/* ── Table of Contents ──────────────────────────────────────── */
-nav.toc {
-  background: #f6f8fa;
-  border: 1px solid #e1e4e8;
-  border-radius: 6px;
-  padding: 20px 24px;
-  margin-bottom: 2em;
-  page-break-inside: avoid;
-  break-inside: avoid;
-  page-break-after: always;
-  break-after: page;
-}
-
-nav.toc h2 {
-  font-size: 1.1em;
-  margin: 0 0 12px 0;
-  padding-bottom: 8px;
-  border-bottom: 1px solid #e1e4e8;
-  border-top: none;
-}
-
-nav.toc ol {
-  margin: 0;
-  padding-left: 1.4em;
-  counter-reset: none;
-}
-
-nav.toc li {
-  margin: 4px 0;
-  font-size: 13px;
-}
-
-nav.toc a {
-  color: #0366d6;
-  text-decoration: none;
-}
-
-nav.toc .toc-h1 { font-weight: 600; }
-nav.toc .toc-h2 { padding-left: 0; }
-nav.toc .toc-h3 { padding-left: 1em;  font-size: 12px; color: #586069; }
-nav.toc .toc-h4 { padding-left: 2em;  font-size: 12px; color: #6a737d; }
-
-/* ── Cover / Front matter ───────────────────────────────────── */
-.doc-cover {
-  text-align: center;
-  padding: 140px 0 40px;
-  page-break-after: always;
-  break-after: page;
-  min-height: 60vh;
-}
-
-.doc-cover h1 {
-  font-size: 2.6em;
-  border: none;
-  margin-bottom: 0.3em;
-  padding-bottom: 0.3em;
-  border-bottom: 2px solid #e1e4e8;
-}
-
-.doc-cover .subtitle {
-  font-size: 1.15em;
-  color: #586069;
-  margin-bottom: 1.5em;
-}
-
-.doc-cover .meta {
-  font-size: 13px;
-  color: #6a737d;
-  font-style: italic;
+li > ul,
+li > ol {
+  margin-top: 0.25em;
+  margin-bottom: 0;
 }
 
 /* ── Definition Lists ───────────────────────────────────────── */
@@ -299,48 +323,16 @@ dl {
 }
 
 dt {
-  font-weight: 600;
-  margin-top: 0.8em;
-  color: #24292e;
+  font-weight: 700;
+  margin-top: 1em;
+  color: #111827;
 }
 
 dd {
-  margin: 0.2em 0 0.5em 2em;
+  margin: 0.25em 0 0.75em 1.5em;
   padding-left: 1em;
-  border-left: 3px solid #e1e4e8;
-  color: #444d56;
-}
-
-/* ── Footnotes ──────────────────────────────────────────────── */
-.footnotes {
-  margin-top: 3em;
-  padding-top: 1em;
-  border-top: 1px solid #e1e4e8;
-  font-size: 12px;
-  color: #586069;
-}
-
-.footnotes ol {
-  padding-left: 1.5em;
-}
-
-.footnotes li {
-  margin-bottom: 0.5em;
-}
-
-.footnotes li p {
-  margin: 0;
-}
-
-sup a {
-  color: #0366d6;
-  text-decoration: none;
-  font-weight: 600;
-}
-
-a.footnote-backref {
-  text-decoration: none;
-  margin-left: 0.3em;
+  border-left: 3px solid #e5e7eb;
+  color: #4b5563;
 }
 
 /* ── Task Lists ─────────────────────────────────────────────── */
@@ -349,21 +341,162 @@ ul.contains-task-list {
   padding-left: 1.5em;
 }
 
+.task-list-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5em;
+}
+
 .task-list-item input[type="checkbox"] {
-  margin-right: 0.5em;
+  margin-top: 0.2em;
+  flex-shrink: 0;
+}
+
+/* ── Page-break helpers ─────────────────────────────────────── */
+.page-break {
+  page-break-after: always;
+  break-after: page;
+  height: 0;
+  margin: 0;
+  visibility: hidden;
+}
+
+.auto-break-h1 h1 {
+  page-break-before: always;
+  break-before: page;
+}
+
+.auto-break-h1 h1:first-of-type {
+  page-break-before: avoid;
+  break-before: avoid;
+}
+
+/* ── Table of Contents ──────────────────────────────────────── */
+nav.toc {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 22px 28px;
+  margin-bottom: 2.5em;
+  page-break-inside: avoid;
+  break-inside: avoid;
+  page-break-after: always;
+  break-after: page;
+}
+
+nav.toc h2 {
+  font-size: 1em;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #6b7280;
+  margin: 0 0 14px 0;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #e5e7eb;
+  border-top: none;
+}
+
+nav.toc ol,
+nav.toc ul {
+  margin: 0;
+  padding-left: 1.2em;
+  list-style: none;
+}
+
+nav.toc li {
+  margin: 5px 0;
+  font-size: 13px;
+  color: #374151;
+}
+
+nav.toc a {
+  color: #2563eb;
+  text-decoration: none;
+}
+
+nav.toc a:hover {
+  text-decoration: underline;
+}
+
+nav.toc .toc-h1 {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+nav.toc .toc-h2 {
+  padding-left: 0;
+}
+
+nav.toc .toc-h3 {
+  padding-left: 1.2em;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+nav.toc .toc-h4 {
+  padding-left: 2.4em;
+  font-size: 11px;
+  color: #9ca3af;
+}
+
+/* ── Cover / Front matter ───────────────────────────────────── */
+.doc-cover {
+  text-align: center;
+  padding: 120px 24px 60px;
+  page-break-after: always;
+  break-after: page;
+  min-height: 70vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.doc-cover h1 {
+  font-size: 2.8em;
+  font-weight: 700;
+  border: none;
+  padding-bottom: 0.4em;
+  margin-bottom: 0.2em;
+  color: #111827;
+  letter-spacing: -0.03em;
+  border-bottom: 3px solid #e5e7eb;
+}
+
+.doc-cover .subtitle {
+  font-size: 1.2em;
+  color: #6b7280;
+  margin-top: 0.5em;
+  margin-bottom: 2em;
+  font-weight: 400;
+}
+
+.doc-cover .meta {
+  font-size: 13px;
+  color: #9ca3af;
+  font-style: italic;
+  line-height: 1.8;
+  margin-top: auto;
+  padding-top: 2em;
 }
 
 /* ── KaTeX Math ─────────────────────────────────────────────── */
 .katex-display {
-  margin: 1.2em 0;
+  margin: 1.4em 0;
   page-break-inside: avoid;
   break-inside: avoid;
+  overflow-x: auto;
 }
-/* ── Mermaid Diagrams ──────────────────────────────────────── */
+
+.katex {
+  font-size: 1.1em;
+}
+
+/* ── Mermaid Diagrams ───────────────────────────────────────── */
 .mermaid-diagram {
   page-break-inside: avoid;
   break-inside: avoid;
-  margin: 1.5em 0;
+  margin: 1.5em auto;
   text-align: center;
   max-width: 100%;
   overflow: hidden;
@@ -374,7 +507,6 @@ ul.contains-task-list {
   height: auto;
 }
 
-/* Mermaid pre block before rendering — hide raw code */
 .mermaid-diagram pre.mermaid {
   background: transparent;
   border: none;
@@ -382,4 +514,91 @@ ul.contains-task-list {
   margin: 0;
   text-align: center;
   white-space: pre-wrap;
+}
+
+/* ── Footnotes ──────────────────────────────────────────────── */
+.footnotes {
+  margin-top: 3.5em;
+  padding-top: 1em;
+  border-top: 1px solid #e5e7eb;
+  font-size: 11.5px;
+  color: #6b7280;
+}
+
+.footnotes ol {
+  padding-left: 1.5em;
+  margin: 0;
+}
+
+.footnotes li {
+  margin-bottom: 0.6em;
+  color: inherit;
+}
+
+.footnotes li p {
+  margin: 0;
+}
+
+sup a {
+  color: #2563eb;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.8em;
+  vertical-align: super;
+  line-height: 0;
+}
+
+a.footnote-backref {
+  text-decoration: none;
+  margin-left: 0.3em;
+  color: #9ca3af;
+}
+
+/* ── Watermark ──────────────────────────────────────────────── */
+.watermark-overlay {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(-40deg);
+  font-size: 80px;
+  font-weight: 900;
+  color: rgba(0, 0, 0, 0.06);
+  pointer-events: none;
+  white-space: nowrap;
+  z-index: 9999;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  user-select: none;
+}
+
+/* ── Print-specific Optimisations ───────────────────────────── */
+@media print {
+  body {
+    background: white !important;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  a[href]::after {
+    content: none;
+  }
+
+  pre,
+  blockquote,
+  table,
+  figure,
+  img {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    page-break-after: avoid;
+    break-after: avoid;
+  }
+
+  p, li {
+    orphans: 3;
+    widows: 3;
+  }
 }

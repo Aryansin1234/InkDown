@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>InkDown — Markdown to PDF, DOCX &amp; HTML</title>
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
-  <meta name="description" content="Convert Markdown to PDF, DOCX, HTML, EPUB, and Reveal.js slides — syntax highlighting, smart tables, Mermaid diagrams, LaTeX math, and a full REST API.">
+  <meta name="description" content="Convert Markdown to PDF, DOCX, and HTML — syntax highlighting, smart tables, Mermaid diagrams, LaTeX math, and a full REST API.">
   <link rel="manifest" href="/manifest.json">
   <meta name="theme-color" content="#FF6363">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -201,7 +201,7 @@
 
       <p class="hero-sub animate-in">
         Drop your <code>.md</code> file, paste your text, or call the <strong>REST API</strong> from any app.
-        Export pixel-perfect <strong>PDF</strong>, <strong>DOCX</strong>, <strong>HTML</strong>, <strong>EPUB</strong>, or <strong>Reveal.js slides</strong> — Mermaid diagrams, LaTeX math, YAML frontmatter, and zero overflow.
+        Export pixel-perfect <strong>PDF</strong>, <strong>DOCX</strong>, or <strong>HTML</strong> — Mermaid diagrams, LaTeX math, YAML frontmatter, and zero overflow.
       </p>
 
       <div class="hero-actions animate-in">
@@ -217,7 +217,7 @@
         </div>
         <div class="hero-stat-sep"></div>
         <div class="hero-stat">
-          <span class="hero-stat-num">5&nbsp;Formats</span>
+          <span class="hero-stat-num">3&nbsp;Formats</span>
           <span class="hero-stat-label">PDF · DOCX · HTML</span>
         </div>
         <div class="hero-stat-sep"></div>
@@ -599,7 +599,7 @@
           <div class="step-number">03</div>
           <div class="step-content">
             <h3>Download your document</h3>
-            <p>Choose PDF, DOCX, HTML, EPUB, or Reveal.js slides. Pixel-perfect output with no layout hacks, no overflow — ready to share or publish.</p>
+            <p>Choose PDF, DOCX, or HTML. Pixel-perfect output with no layout hacks, no overflow — ready to share or publish.</p>
           </div>
         </div>
       </div>
@@ -699,20 +699,12 @@
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
           </div>
           <div class="feature-body">
-            <h3 class="feature-title">HTML &amp; EPUB Export</h3>
-            <p class="feature-desc">Self-contained HTML with all images base64-inlined, or EPUB e-books compatible with Kindle, iBooks, and any reader. Both include TOC and styling.</p>
+            <h3 class="feature-title">HTML Export</h3>
+            <p class="feature-desc">Self-contained HTML with all images base64-inlined. Includes TOC, syntax highlighting, and full styling — ready to open in any browser.</p>
           </div>
         </div>
 
-        <div class="feature-row animate-in">
-          <div class="feature-icon feature-icon-blue">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
-          </div>
-          <div class="feature-body">
-            <h3 class="feature-title">Slides &amp; Presentations</h3>
-            <p class="feature-desc">Turn any Markdown into a Reveal.js HTML presentation. 11 themes, 6 transitions, horizontal &amp; vertical slides. Use <code>---</code> to split slides or let InkDown auto-split by headings.</p>
-          </div>
-        </div>
+
 
         <div class="feature-row animate-in">
           <div class="feature-icon feature-icon-green">
@@ -796,7 +788,7 @@
         <div class="api-endpoint">
           <span class="endpoint-badge method-post">POST</span>
           <code class="endpoint-path">/api/v1/convert</code>
-          <span class="endpoint-desc">Convert Markdown → PDF, DOCX, HTML, EPUB, or Slides</span>
+          <span class="endpoint-desc">Convert Markdown → PDF, DOCX, or HTML</span>
           <a href="#api-convert" class="endpoint-anchor">↓</a>
         </div>
         <div class="api-endpoint">
@@ -862,7 +854,7 @@
               <td><code class="param-name">format</code></td>
               <td><span class="param-type">string</span></td>
               <td><span class="param-optional">optional</span></td>
-              <td><code>"pdf"</code> (default), <code>"docx"</code>, <code>"html"</code>, <code>"epub"</code>, or <code>"slides"</code></td>
+              <td><code>"pdf"</code> (default), <code>"docx"</code>, or <code>"html"</code></td>
             </tr>
             <tr>
               <td><code class="param-name">title</code></td>
@@ -951,7 +943,7 @@
   },
   body: JSON.stringify({
     markdown: '# Hello World\n\nThis is my document.',
-    format: 'pdf',   // 'pdf' | 'docx' | 'html' | 'epub' | 'slides'
+    format: 'pdf',   // 'pdf' | 'docx' | 'html'
     title: 'My Document',
     author: 'Jane Smith',
     pageSize: 'Letter',
@@ -984,7 +976,7 @@ response = requests.post(
     headers={'X-API-Key': 'your_api_key'},
     json={
         'markdown': '# Hello World\n\nThis is my document.',
-        'format': 'epub',   # 'pdf' | 'docx' | 'html' | 'epub' | 'slides'
+        'format': 'html',   # 'pdf' | 'docx' | 'html'
         'title': 'My Document',
         'author': 'Jane Smith',
         'toc': True,
@@ -992,10 +984,10 @@ response = requests.post(
 )
 response.raise_for_status()
 
-with open('document.epub', 'wb') as f:
+with open('document.html', 'wb') as f:
     f.write(response.content)
 
-print('Saved document.epub')</code></pre>
+print('Saved document.html')</code></pre>
         </div>
 
         <!-- PHP -->
