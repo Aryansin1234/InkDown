@@ -582,7 +582,23 @@ flowchart LR
 
 ## 🧩 VS Code Extension
 
-Install the **InkDown** extension to convert Markdown directly from your editor.
+The **InkDown VS Code Extension** brings the full InkDown engine directly into your editor — no browser, no terminal, no context switching. Open any `.md` file and export it to PDF, DOCX, HTML, EPUB, or Reveal.js slides with a single keyboard shortcut.
+
+The extension connects to a local InkDown server (it can start and manage one for you automatically) or falls back to the InkDown CLI. This means you get the same high-fidelity output — Mermaid diagrams, KaTeX math, syntax highlighting, custom CSS themes — without leaving VS Code.
+
+**Key highlights:**
+- **One-click export** — `⌘⇧⌥P` converts the active file to PDF instantly
+- **Live preview** — side-by-side rendered Markdown that updates as you type
+- **Auto-export on save** — toggle it on and every save triggers a fresh export
+- **Batch export** — right-click any folder in the Explorer to export all `.md` files at once
+- **Convert with Options wizard** — step-by-step UI for picking format, page size, TOC, watermark, and custom templates
+- **Word count + reading time** — always visible in the VS Code status bar
+- **Outline panel** — H1–H6 headings appear as navigable symbols
+- **Built-in snippets** — type `flow`, `seq`, `gantt`, `katex`, `frontmatter` etc. to scaffold common blocks
+
+**Install:** Search for `InkDown` in the VS Code Extensions panel (`⌘⇧X`) or install it from the [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=inkdown.inkdown-vscode).
+
+**Prerequisite:** An InkDown server running at `http://localhost:3000` (default), or the InkDown CLI available on your `PATH`. Configure the server URL and API key via the `inkdown.serverUrl` and `inkdown.apiKey` settings.
 
 ### Commands
 
