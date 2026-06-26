@@ -48,6 +48,27 @@ function buildRenderer() {
     );
   };
 
+  // Syntax-highlight fenced code blocks directly in the renderer.
+  // walkTokens + token.escaped is unreliable in marked v13 — it causes
+  // hljs <span> tags to appear literally inside mermaid source, breaking
+  // every diagram. The renderer approach receives the raw, un-escaped text.
+  renderer.code = function ({ text, lang }) {
+    const language = (lang || '').split(/\s/)[0].toLowerCase();
+    if (language === 'mermaid') {
+      return `<pre><code class="language-mermaid">${text}</code></pre>\n`;
+    }
+    let highlighted;
+    if (language && hljs.getLanguage(language)) {
+      highlighted = hljs.highlight(text, { language }).value;
+    } else if (!language) {
+      highlighted = hljs.highlightAuto(text).value;
+    } else {
+      highlighted = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+    const langClass = language ? ` class="hljs language-${language}"` : ' class="hljs"';
+    return `<pre><code${langClass}>${highlighted}</code></pre>\n`;
+  };
+
   return renderer;
 }
 
@@ -56,26 +77,6 @@ function configureMarked() {
     renderer: buildRenderer(),
     gfm: true,        // GitHub-Flavoured Markdown (tables, strikethrough, etc.)
     breaks: false,    // keep semantic line-break behaviour
-  });
-
-  // Syntax-highlight fenced code blocks via highlight.js
-  // Mermaid blocks are left untouched — converted to diagrams via post-processing
-  marked.use({
-    extensions: [],
-    walkTokens(token) {
-      if (token.type === 'code') {
-        const lang = token.lang ? token.lang.split(/\s/)[0] : '';
-        // Skip mermaid — will be post-processed into diagram divs
-        if (lang.toLowerCase() === 'mermaid') return;
-        if (lang && hljs.getLanguage(lang)) {
-          token.text = hljs.highlight(token.text, { language: lang }).value;
-          token.escaped = true;
-        } else {
-          token.text = hljs.highlightAuto(token.text).value;
-          token.escaped = true;
-        }
-      }
-    },
   });
 
   // Footnotes: [^1] → rendered as numbered footnotes at end of document
@@ -423,4 +424,67 @@ async function convert(inputPath, outputPath, opts = {}) {
   return absOutput;
 }
 
-module.exports = { convert };
+// ── HTML export function ─────────────────────────────────────
+/**
+ * @param {string}  inputPath   - Path to .md file
+ * @param {string}  outputPath  - Desired .html output path
+ * @param {object}  [opts]
+ * @param {boolean} [opts.toc=false]
+ * @param {boolean} [opts.autoBreak=false]
+ * @param {string}  [opts.title]
+ * @param {string}  [opts.author]
+ * @param {string}  [opts.date]
+ * @param {string}  [opts.theme]  - Path to custom CSS file
+ */
+async function convertToHtml(inputPath, outputPath, opts = {}) {
+  const { toc = false, autoBreak = false, title, author = '', date = '', theme = '' } = opts;
+
+  const absInput  = path.resolve(inputPath);
+  const absOutput = path.resolve(outputPath);
+  const baseDir   = path.dirname(absInput);
+  const docTitle  = title || path.basename(absInput, path.extname(absInput));
+
+  if (!fs.existsSync(absInput)) {
+    throw new Error(`Input file not found: ${absInput}`);
+  }
+
+  fs.mkdirSync(path.dirname(absOutput), { recursive: true });
+
+  const rawMarkdown = fs.readFileSync(absInput, 'utf-8');
+  const { highlightCss, printCss, katexCss } = loadAssets();
+
+  const { markdown, report } = await analyze(rawMarkdown, { autoBreak, fixHeadings: true });
+
+  if (report.headingFixes.length) {
+    console.log(`  ⚠ Fixed ${report.headingFixes.length} heading hierarchy skip(s)`);
+  }
+
+  let body = marked.parse(markdown);
+  body = await convertMermaidBlocks(body);
+  body = inlineImages(body, baseDir);
+
+  const tocHtml  = toc ? buildTOC(extractHeadings(body)) : '';
+  const coverPage = buildCoverPage({ title: docTitle, author, date });
+
+  // Load optional custom theme CSS
+  let customCss = '';
+  if (theme && fs.existsSync(theme)) {
+    customCss = fs.readFileSync(theme, 'utf-8');
+  }
+
+  const html = buildHtml({
+    body,
+    toc: tocHtml,
+    coverPage,
+    autoBreak,
+    title: docTitle,
+    highlightCss,
+    printCss: printCss + '\n' + (katexCss || '') + (customCss ? '\n' + customCss : ''),
+    katexCss: '',
+  });
+
+  fs.writeFileSync(absOutput, html, 'utf-8');
+  return absOutput;
+}
+
+module.exports = { convert, convertToHtml };

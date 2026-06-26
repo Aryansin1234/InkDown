@@ -2,7 +2,7 @@
   "name": "inkdown-vscode",
   "displayName": "InkDown — Markdown to PDF, DOCX & HTML",
   "description": "Convert Markdown to production-quality PDF, DOCX, and HTML with Mermaid diagrams, math (KaTeX), syntax highlighting, live preview, and one-click export.",
-  "version": "1.6.1",
+  "version": "1.6.2",
   "publisher": "inkdown",
   "license": "MIT",
   "icon": "icon.png",
