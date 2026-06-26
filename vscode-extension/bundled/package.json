@@ -16,8 +16,6 @@
   "dependencies": {
     "adm-zip": "^0.5.17",
     "cors": "^2.8.6",
-    "express-rate-limit": "^7.5.0",
-    "gray-matter": "^4.0.3",
     "express": "^5.2.1",
     "highlight.js": "^11.10.0",
     "katex": "^0.16.45",

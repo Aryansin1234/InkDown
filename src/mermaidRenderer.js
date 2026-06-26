@@ -11,6 +11,7 @@ const puppeteer = require('puppeteer');
 const crypto    = require('crypto');
 const fs        = require('fs');
 const path      = require('path');
+const { resolveChromePath } = require('./chromeResolver');
 
 // ── Local mermaid.js source (no CDN dependency) ───────────────
 const MERMAID_JS_PATH = path.join(__dirname, '..', 'node_modules', 'mermaid', 'dist', 'mermaid.min.js');
@@ -118,6 +119,7 @@ async function renderToSvg(code, browserOrPage) {
       ownBrowser = true;
       browser = await puppeteer.launch({
         headless: true,
+        executablePath: resolveChromePath(),
         args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
       });
     }
@@ -189,6 +191,7 @@ async function renderToPng(code, opts = {}) {
   const ownBrowser = !existingBrowser;
   const browser = existingBrowser || await puppeteer.launch({
     headless: true,
+    executablePath: resolveChromePath(),
     args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
   });
 
@@ -329,6 +332,7 @@ async function replaceMermaidWithImages(markdown, outputDir, opts = {}) {
   // Launch one browser for all diagrams
   const browser = await puppeteer.launch({
     headless: true,
+    executablePath: resolveChromePath(),
     args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
   });
 

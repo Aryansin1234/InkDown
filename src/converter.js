@@ -11,6 +11,7 @@
 const fs       = require('fs');
 const path     = require('path');
 const puppeteer = require('puppeteer');
+const { resolveChromePath } = require('./chromeResolver');
 const { marked } = require('marked');
 const hljs     = require('highlight.js');
 const { analyze } = require('./analyzer');
@@ -18,7 +19,6 @@ const { convertGridTables } = require('./gridTableParser');
 const { renderToSvg, createMermaidPage, extractMermaidBlocks } = require('./mermaidRenderer');
 const markedFootnote = require('marked-footnote');
 const markedKatex = require('marked-katex-extension');
-const { parseFrontmatter, substituteVariables } = require('./frontmatter');
 
 // ── Slugify helper ────────────────────────────────────────────
 function slugify(text) {
@@ -48,26 +48,6 @@ function buildRenderer() {
     );
   };
 
-  // Syntax-highlight fenced code blocks directly in the renderer so the HTML
-  // is never re-escaped by marked. walkTokens + token.escaped is unreliable in
-  // marked v13 and causes literal <span> tags to appear in the output.
-  renderer.code = function ({ text, lang }) {
-    const language = (lang || '').split(/\s/)[0].toLowerCase();
-    if (language === 'mermaid') {
-      return `<pre><code class="language-mermaid">${text}</code></pre>\n`;
-    }
-    let highlighted;
-    if (language && hljs.getLanguage(language)) {
-      highlighted = hljs.highlight(text, { language }).value;
-    } else if (!language) {
-      highlighted = hljs.highlightAuto(text).value;
-    } else {
-      highlighted = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-    }
-    const langClass = language ? ` class="hljs language-${language}"` : ' class="hljs"';
-    return `<pre><code${langClass}>${highlighted}</code></pre>\n`;
-  };
-
   return renderer;
 }
 
@@ -76,6 +56,26 @@ function configureMarked() {
     renderer: buildRenderer(),
     gfm: true,        // GitHub-Flavoured Markdown (tables, strikethrough, etc.)
     breaks: false,    // keep semantic line-break behaviour
+  });
+
+  // Syntax-highlight fenced code blocks via highlight.js
+  // Mermaid blocks are left untouched — converted to diagrams via post-processing
+  marked.use({
+    extensions: [],
+    walkTokens(token) {
+      if (token.type === 'code') {
+        const lang = token.lang ? token.lang.split(/\s/)[0] : '';
+        // Skip mermaid — will be post-processed into diagram divs
+        if (lang.toLowerCase() === 'mermaid') return;
+        if (lang && hljs.getLanguage(lang)) {
+          token.text = hljs.highlight(token.text, { language: lang }).value;
+          token.escaped = true;
+        } else {
+          token.text = hljs.highlightAuto(token.text).value;
+          token.escaped = true;
+        }
+      }
+    },
   });
 
   // Footnotes: [^1] → rendered as numbered footnotes at end of document
@@ -146,153 +146,8 @@ function hasMermaidBlocks(html) {
   return html.includes('class="mermaid-diagram"');
 }
 
-function buildHtml({ body, toc, coverPage, autoBreak, title, highlightCss, printCss, katexCss, watermark = '', htmlMode = false }) {
+function buildHtml({ body, toc, coverPage, autoBreak, title, highlightCss, printCss, katexCss }) {
   const bodyClass = autoBreak ? 'auto-break-h1' : '';
-
-  const watermarkCss = watermark ? `
-  .watermark-overlay {
-    position: fixed;
-    top: 50%; left: 50%;
-    transform: translate(-50%, -50%) rotate(-45deg);
-    font-size: 96px;
-    font-weight: 900;
-    color: rgba(0, 0, 0, 0.08);
-    z-index: 9999;
-    pointer-events: none;
-    white-space: nowrap;
-    user-select: none;
-    letter-spacing: 0.05em;
-  }
-  @media print {
-    .watermark-overlay {
-      position: fixed;
-      top: 50%; left: 50%;
-      transform: translate(-50%, -50%) rotate(-45deg);
-      font-size: 96px;
-      font-weight: 900;
-      color: rgba(0, 0, 0, 0.08);
-      -webkit-print-color-adjust: exact;
-      print-color-adjust: exact;
-      z-index: 9999;
-      pointer-events: none;
-      white-space: nowrap;
-      user-select: none;
-    }
-  }` : '';
-
-  const watermarkHtml = watermark
-    ? `<div class="watermark-overlay">${escapeHtml(watermark)}</div>`
-    : '';
-
-  // Screen-only enhancements — override print styles for browser viewing
-  const screenCss = `
-@media screen {
-  /* Centered readable column with comfortable padding */
-  body {
-    background: #f0f2f5;
-    padding: 40px 20px;
-    font-size: 15px;
-    line-height: 1.7;
-  }
-  main {
-    max-width: 860px;
-    margin: 0 auto;
-    background: #ffffff;
-    border-radius: 8px;
-    padding: 48px 56px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.10), 0 4px 20px rgba(0,0,0,0.07);
-  }
-  /* Allow horizontal scroll on code blocks instead of wrapping */
-  pre {
-    white-space: pre;
-    overflow-x: auto;
-    word-break: normal;
-    border-radius: 8px;
-    border: none;
-    background: #f6f8fa;
-    padding: 16px 20px;
-    font-size: 13px;
-  }
-  /* Inline code pill */
-  code {
-    background: #eff1f3;
-    border-radius: 4px;
-    padding: 0.15em 0.45em;
-    font-size: 0.87em;
-  }
-  /* Scrollable table wrapper */
-  table {
-    display: block;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-  }
-  /* Better link colour */
-  a { color: #0969da; }
-  a:hover { text-decoration: underline; }
-  /* Mermaid diagrams centred with a subtle card */
-  .mermaid-diagram {
-    text-align: center;
-    background: #f9fafb;
-    border: 1px solid #e1e4e8;
-    border-radius: 8px;
-    padding: 24px 16px;
-    margin: 1.5em 0;
-    overflow-x: auto;
-  }
-  .mermaid-diagram svg {
-    max-width: 100%;
-    height: auto;
-  }
-  /* TOC card */
-  nav.toc {
-    background: #f8f9fb;
-    border-radius: 8px;
-    border: 1px solid #d0d7de;
-    padding: 20px 28px;
-  }
-  /* Cover page */
-  .doc-cover {
-    padding: 80px 0 60px;
-  }
-  /* Responsive: narrow screens */
-  @media (max-width: 600px) {
-    main { padding: 28px 20px; }
-    body { padding: 0; }
-    main { border-radius: 0; }
-  }
-}`;
-
-  // For HTML browser mode: style mermaid.js divs nicely
-  const mermaidCss = htmlMode ? `
-/* mermaid.js renders into .mermaid divs */
-.mermaid {
-  text-align: center;
-  background: #f9fafb;
-  border: 1px solid #e1e4e8;
-  border-radius: 8px;
-  padding: 24px 16px;
-  margin: 1.5em 0;
-  overflow-x: auto;
-}
-.mermaid svg { max-width: 100%; height: auto; }
-` : '';
-
-  // Scripts for HTML browser mode (mermaid.js + KaTeX auto-render from CDN)
-  const headScripts = htmlMode ? `
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16/dist/katex.min.css" crossorigin="anonymous">
-` : '';
-
-  const bodyScripts = htmlMode ? `
-  <script type="module">
-    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
-    mermaid.initialize({ startOnLoad: true, theme: 'default', securityLevel: 'loose' });
-  </script>
-  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16/dist/katex.min.js" crossorigin="anonymous"></script>
-  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16/dist/contrib/auto-render.min.js"
-    crossorigin="anonymous"
-    onload="renderMathInElement(document.body, { delimiters: [{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}] })">
-  </script>
-` : '';
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -305,20 +160,15 @@ ${highlightCss}
   </style>
   <style>
 ${printCss}
-${watermarkCss}
-${screenCss}
-${mermaidCss}
   </style>
-${htmlMode ? headScripts : (katexCss ? `  <link rel="stylesheet" href="${katexCss}">` : '')}
+${katexCss ? `  <link rel="stylesheet" href="${katexCss}">` : ''}
 </head>
 <body class="${bodyClass}">
-  ${watermarkHtml}
   ${coverPage}
   ${toc}
   <main>
     ${body}
   </main>
-${bodyScripts}
 </body>
 </html>`;
 }
@@ -364,36 +214,27 @@ function loadAssets() {
  *   <div class="mermaid-diagram">...SVG...</div>
  */
 async function convertMermaidBlocks(html) {
-  // Match both plain and hljs-prefixed class variants:
-  //   class="language-mermaid"  (normal path)
-  //   class="hljs language-mermaid"  (if hljs ran anyway)
-  const re = /<pre><code[^>]*class="[^"]*language-mermaid[^"]*"[^>]*>([\s\S]*?)<\/code><\/pre>/gi;
+  const re = /<pre><code class="language-mermaid">([\s\S]*?)<\/code><\/pre>/gi;
   const matches = [];
   let m;
   while ((m = re.exec(html)) !== null) {
     const raw = m[1]
-      // Pass 1: strip literal HTML tags injected by hljs (token.escaped=true path)
-      .replace(/<[^>]+>/g, '')
-      // Unescape HTML entities
       .replace(/&amp;/g, '&')
       .replace(/&lt;/g, '<')
       .replace(/&gt;/g, '>')
       .replace(/&quot;/g, '"')
-      .replace(/&#39;/g, "'")
-      // Pass 2: strip tags that became visible only after unescaping
-      .replace(/<[^>]+>/g, '')
-      .trim();
+      .replace(/&#39;/g, "'");
     matches.push({ fullMatch: m[0], code: raw });
   }
 
   if (matches.length === 0) return html;
 
   // Launch a browser and create a SINGLE page with mermaid pre-loaded.
-  // Note: matches already have HTML stripped — see extraction loop above.
   // Reusing one page avoids repeated CDN fetches that can fail intermittently.
   const puppeteer = require('puppeteer');
   const browser = await puppeteer.launch({
     headless: true,
+    executablePath: resolveChromePath(),
     args: ['--no-sandbox', '--disable-setuid-sandbox'],
   });
 
@@ -476,9 +317,12 @@ function inlineImages(html, baseDir) {
  * @param {string}  [opts.title]           - PDF title (defaults to filename)
  */
 async function convert(inputPath, outputPath, opts = {}) {
+  const { toc = false, autoBreak = false, title, author = '' } = opts;
+
   const absInput  = path.resolve(inputPath);
   const absOutput = path.resolve(outputPath);
   const baseDir   = path.dirname(absInput);
+  const docTitle  = title || path.basename(absInput, path.extname(absInput));
 
   if (!fs.existsSync(absInput)) {
     throw new Error(`Input file not found: ${absInput}`);
@@ -488,41 +332,10 @@ async function convert(inputPath, outputPath, opts = {}) {
   fs.mkdirSync(path.dirname(absOutput), { recursive: true });
 
   const rawMarkdown = fs.readFileSync(absInput, 'utf-8');
-
-  // Parse YAML frontmatter — data fills in any opts not explicitly provided
-  const { data: fm, content: markdownBody } = parseFrontmatter(rawMarkdown);
-
-  const {
-    toc       = fm.toc       === true || false,
-    autoBreak = fm.autoBreak === true || false,
-    title     = fm.title,
-    author    = fm.author    || '',
-    pageSize  = fm.pageSize  || 'A4',
-    landscape = fm.landscape === true || false,
-    theme     = fm.theme     || '',
-    watermark = fm.watermark || '',
-  } = opts;
-
-  const docTitle = title || path.basename(absInput, path.extname(absInput));
-
-  // Variable substitution — replace {{key}} with frontmatter values
-  const bodyWithVars = substituteVariables(markdownBody, fm);
-
-  const { highlightCss, printCss: basePrintCss, katexCss } = loadAssets();
-
-  // Custom theme: layer on top of base styles (not replace) so mermaid/code
-  // infrastructure CSS from styles.css is always present.
-  let printCss = basePrintCss;
-  if (theme) {
-    const themePath = path.resolve(theme);
-    if (fs.existsSync(themePath) && path.extname(themePath).toLowerCase() === '.css') {
-      const themeCss = fs.readFileSync(themePath, 'utf-8');
-      printCss = basePrintCss + '\n/* ── Custom theme ── */\n' + themeCss;
-    }
-  }
+  const { highlightCss, printCss, katexCss } = loadAssets();
 
   // Smart analysis pass — normalize headings, detect issues, convert grid tables
-  const { markdown, report } = await analyze(bodyWithVars, {
+  const { markdown, report } = await analyze(rawMarkdown, {
     autoBreak,
     fixHeadings: true,
   });
@@ -550,11 +363,12 @@ async function convert(inputPath, outputPath, opts = {}) {
   const coverPage = buildCoverPage({ title: docTitle, author });
 
   // Assemble full HTML document (KaTeX CSS inlined into printCss)
-  const html = buildHtml({ body, toc: tocHtml, coverPage, autoBreak, title: docTitle, highlightCss, printCss: printCss + '\n' + (katexCss || ''), katexCss: '', watermark });
+  const html = buildHtml({ body, toc: tocHtml, coverPage, autoBreak, title: docTitle, highlightCss, printCss: printCss + '\n' + (katexCss || ''), katexCss: '' });
 
   // Launch Puppeteer and render PDF
   const browser = await puppeteer.launch({
     headless: true,
+    executablePath: resolveChromePath(),
     args: [
       '--no-sandbox',
       '--disable-setuid-sandbox',
@@ -578,8 +392,7 @@ async function convert(inputPath, outputPath, opts = {}) {
 
     await page.pdf({
       path:            absOutput,
-      format:          pageSize || 'A4',
-      landscape:       Boolean(landscape),
+      format:          'A4',
       printBackground: true,
       margin: {
         top:    '20mm',
@@ -610,109 +423,4 @@ async function convert(inputPath, outputPath, opts = {}) {
   return absOutput;
 }
 
-// ── Prepare mermaid blocks for browser rendering (HTML export) ──
-/**
- * For HTML export we DON'T use Puppeteer — instead we:
- *   1. Swap <pre><code class="language-mermaid">...</code></pre>
- *      for <div class="mermaid">...</div>  (mermaid.js auto-renders these)
- *   2. Unescape HTML entities so the raw diagram source is intact
- * The caller must inject mermaid.js into the page (see buildHtml htmlMode flag).
- */
-function prepareMermaidForBrowser(html) {
-  const re = /<pre><code[^>]*class="[^"]*language-mermaid[^"]*"[^>]*>([\s\S]*?)<\/code><\/pre>/gi;
-  return html.replace(re, (_match, raw) => {
-    const code = raw
-      .replace(/<[^>]+>/g, '')      // strip any stray hljs spans
-      .replace(/&amp;/g, '&')
-      .replace(/&lt;/g, '<')
-      .replace(/&gt;/g, '>')
-      .replace(/&quot;/g, '"')
-      .replace(/&#39;/g, "'")
-      .trim();
-    return `<div class="mermaid">${escapeHtml(code)}</div>`;
-  });
-}
-
-
-/**
- * Convert Markdown to a standalone self-contained HTML file.
- * Mermaid diagrams are rendered to inline SVGs; images are base64-inlined.
- *
- * @param {string}  inputPath  - Path to .md file
- * @param {string}  outputPath - Desired .html output path
- * @param {object}  [opts]
- * @param {boolean} [opts.toc=false]
- * @param {boolean} [opts.autoBreak=false]
- * @param {string}  [opts.title]
- * @param {string}  [opts.watermark] - Diagonal watermark text (e.g. 'DRAFT')
- * @param {string}  [opts.theme]     - Path to a custom CSS file
- * @returns {Promise<string>} the output path
- */
-async function convertToHtml(inputPath, outputPath, opts = {}) {
-  const absInput  = path.resolve(inputPath);
-  const absOutput = path.resolve(outputPath);
-  const baseDir   = path.dirname(absInput);
-
-  if (!fs.existsSync(absInput)) {
-    throw new Error(`Input file not found: ${absInput}`);
-  }
-
-  fs.mkdirSync(path.dirname(absOutput), { recursive: true });
-
-  const rawMarkdown = fs.readFileSync(absInput, 'utf-8');
-
-  // Parse YAML frontmatter
-  const { data: fm, content: markdownBody } = parseFrontmatter(rawMarkdown);
-
-  const {
-    toc       = fm.toc       === true || false,
-    autoBreak = fm.autoBreak === true || false,
-    title     = fm.title,
-    author    = fm.author    || '',
-    watermark = fm.watermark || '',
-    theme     = fm.theme     || '',
-  } = opts;
-
-  const docTitle    = title || path.basename(absInput, path.extname(absInput));
-  const bodyWithVars = substituteVariables(markdownBody, fm);
-
-  const { highlightCss, printCss: basePrintCss, katexCss } = loadAssets();
-
-  let printCss = basePrintCss;
-  if (theme) {
-    const themePath = path.resolve(theme);
-    if (fs.existsSync(themePath) && path.extname(themePath).toLowerCase() === '.css') {
-      const themeCss = fs.readFileSync(themePath, 'utf-8');
-      printCss = basePrintCss + '\n/* ── Custom theme ── */\n' + themeCss;
-    }
-  }
-
-  const { markdown } = await analyze(bodyWithVars, { autoBreak, fixHeadings: true });
-
-  let body = marked.parse(markdown);
-  // Pre-render mermaid diagrams to inline SVGs — self-contained, works offline
-  body = await convertMermaidBlocks(body);
-  body = inlineImages(body, baseDir);
-
-  const tocHtml   = toc ? buildTOC(extractHeadings(body)) : '';
-  const coverPage = buildCoverPage({ title: docTitle, author });
-
-  const html = buildHtml({
-    body,
-    toc: tocHtml,
-    coverPage,
-    autoBreak,
-    title: docTitle,
-    highlightCss,
-    // Inline KaTeX CSS for self-contained HTML (same approach as PDF)
-    printCss: printCss + '\n' + (katexCss || ''),
-    katexCss: '',
-    watermark,
-    htmlMode: false,  // mermaid pre-rendered server-side; no CDN scripts needed
-  });
-
-  fs.writeFileSync(absOutput, html, 'utf-8');
-  return absOutput;
-}
-
-module.exports = { convert, convertToHtml };
+module.exports = { convert };
