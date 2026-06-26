@@ -241,6 +241,12 @@ async function renderToDocxSvg(code, opts = {}) {
     await page.close();
     if (!svgString) return null;
 
+    // Mermaid 11.x produces <foreignObject> elements in flowcharts, class diagrams,
+    // state diagrams, ER diagrams, and mindmaps regardless of htmlLabels:false.
+    // Word silently drops <foreignObject> content, making all node labels invisible.
+    // Return null so the caller falls back to high-DPI PNG for these diagram types.
+    if (svgString.includes('<foreignObject')) return null;
+
     // Ensure proper SVG namespace and clean up mermaid's inline max-width styles
     let clean = svgString
       .replace(/\bstyle="([^"]*)max-width[^"]*"/g, (_, before) => {
