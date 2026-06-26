@@ -247,6 +247,19 @@ async function renderToDocxSvg(code, opts = {}) {
     // Return null so the caller falls back to high-DPI PNG for these diagram types.
     if (svgString.includes('<foreignObject')) return null;
 
+    // Word's SVG renderer also fails on:
+    //   - Negative viewBox coordinates (gitGraph branch labels extend left into negative x)
+    //     → content is hard-clipped at x=0, cutting off all branch labels
+    //   - CSS var() custom properties → unresolved, causing style bleed
+    //   - hsl() / fractional rgb() in <style> block class rules → rendered as black
+    // Detect these and fall back to PNG.
+    const viewBoxMatch = svgString.match(/viewBox="([^"]*)"/);
+    if (viewBoxMatch) {
+      const [vx, vy] = viewBoxMatch[1].trim().split(/\s+/).map(Number);
+      if (vx < 0 || vy < 0) return null;
+    }
+    if (svgString.includes('var(--')) return null;
+
     // Ensure proper SVG namespace and clean up mermaid's inline max-width styles
     let clean = svgString
       .replace(/\bstyle="([^"]*)max-width[^"]*"/g, (_, before) => {
