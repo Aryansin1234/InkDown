@@ -165,17 +165,112 @@ async function renderToSvg(code, browserOrPage) {
 }
 
 /**
- * Render a mermaid diagram to a PNG buffer using Puppeteer.
- * Used for DOCX embedding where SVG support is limited.
+ * Render a mermaid diagram to a clean SVG string for DOCX embedding.
+ *
+ * Uses htmlLabels:false so the SVG contains only native <text> elements
+ * (no <foreignObject>) — required for Word to render the SVG correctly.
+ * The resulting SVG is vector and infinitely zoomable.
  *
  * @param {string} code - Mermaid diagram source code
  * @param {object} [opts]
- * @param {number} [opts.scale=2] - Device scale factor for high-DPI output
+ * @param {object} [opts.browser] - Reuse existing Puppeteer browser
+ * @returns {Promise<string|null>} Clean SVG string, or null on failure
+ */
+async function renderToDocxSvg(code, opts = {}) {
+  const { browser: existingBrowser } = opts;
+
+  const trimmedCode = code.trim().toLowerCase();
+  const isGantt    = trimmedCode.startsWith('gantt');
+  const isSequence = trimmedCode.startsWith('sequencediagram');
+  const isGitGraph = trimmedCode.startsWith('gitgraph');
+  const maxWidth   = isGantt ? 1100 : (isSequence || isGitGraph) ? 960 : 800;
+
+  const ownBrowser = !existingBrowser;
+  const browser = existingBrowser || await puppeteer.launch({
+    headless: true,
+    executablePath: resolveChromePath(),
+    args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
+  });
+
+  try {
+    const page = await browser.newPage();
+    await page.setViewport({ width: maxWidth, height: 800, deviceScaleFactor: 1 });
+
+    const mermaidSrc = getMermaidSource();
+    await page.setContent(`<!DOCTYPE html>
+<html><head>
+<style>body { margin: 0; padding: 0; background: white; }</style>
+</head><body><div id="container"></div></body></html>`,
+      { waitUntil: 'domcontentloaded' });
+
+    await page.addScriptTag({ content: mermaidSrc });
+
+    // htmlLabels:false is critical — avoids <foreignObject> which Word cannot render
+    await page.evaluate((ganttChart) => {
+      mermaid.initialize({
+        startOnLoad: false,
+        theme: 'default',
+        securityLevel: 'loose',
+        flowchart: { useMaxWidth: true, htmlLabels: false },
+        sequence:  { useMaxWidth: true },
+        gitGraph:  { useMaxWidth: true },
+        er:        { useMaxWidth: true, layoutDirection: 'TB',
+                     fontSize: 10, entityPadding: 10 },
+        gantt:     { useMaxWidth: !ganttChart,
+                     fontSize: 12, barHeight: 28, barGap: 8,
+                     leftPadding: 100, topPadding: 50 },
+      });
+    }, isGantt);
+
+    const svgString = await page.evaluate(async (diagramCode) => {
+      try {
+        const { svg } = await mermaid.render('mermaid-docx-svg', diagramCode);
+        return svg;
+      } catch (_e) {
+        try {
+          const stale = document.getElementById('dmermaid-docx-svg');
+          if (stale) stale.remove();
+          const { svg } = await mermaid.render('mermaid-docx-svg-r', diagramCode);
+          return svg;
+        } catch (_e2) {
+          return null;
+        }
+      }
+    }, code);
+
+    await page.close();
+    if (!svgString) return null;
+
+    // Ensure proper SVG namespace and clean up mermaid's inline max-width styles
+    let clean = svgString
+      .replace(/\bstyle="([^"]*)max-width[^"]*"/g, (_, before) => {
+        const stripped = before.replace(/max-width\s*:[^;]*;?\s*/g, '').trim();
+        return stripped ? `style="${stripped}"` : '';
+      });
+
+    // Guarantee xmlns so Word/OOXML treats it as a proper SVG document
+    if (!clean.includes('xmlns=')) {
+      clean = clean.replace('<svg', '<svg xmlns="http://www.w3.org/2000/svg"');
+    }
+
+    return clean;
+  } finally {
+    if (ownBrowser) await browser.close();
+  }
+}
+
+/**
+ * Render a mermaid diagram to a PNG buffer using Puppeteer.
+ * Used as fallback for DOCX embedding when SVG rendering fails.
+ *
+ * @param {string} code - Mermaid diagram source code
+ * @param {object} [opts]
+ * @param {number} [opts.scale=4] - Device scale factor for high-DPI output
  * @param {object} [opts.browser] - Reuse existing Puppeteer browser
  * @returns {Promise<Buffer>} PNG image buffer
  */
 async function renderToPng(code, opts = {}) {
-  const { scale = 2, browser: existingBrowser } = opts;
+  const { scale = 4, browser: existingBrowser } = opts;
 
   // Detect diagram type to choose appropriate viewport width
   const trimmedCode = code.trim().toLowerCase();
@@ -311,13 +406,16 @@ async function renderToPng(code, opts = {}) {
 }
 
 /**
- * Replace all mermaid code blocks in markdown with rendered PNG images.
- * Writes PNG files to the given directory and returns modified markdown.
+ * Replace all mermaid code blocks in markdown with rendered images.
+ *
+ * Strategy (best quality, infinitely zoomable):
+ *   1. Try SVG first — vector, perfect at any zoom level, Word 2013+ renders inline SVG.
+ *   2. Fall back to high-DPI PNG (4x scale) if SVG rendering fails.
  *
  * @param {string} markdown - Raw markdown content
- * @param {string} outputDir - Directory to write PNG files
+ * @param {string} outputDir - Directory to write image files
  * @param {object} [opts]
- * @param {boolean} [opts.includeSource=true] - Include source code as caption for editability
+ * @param {boolean} [opts.includeSource=true] - Preserve source as HTML comment
  * @returns {Promise<{ markdown: string, diagramCount: number }>}
  */
 async function replaceMermaidWithImages(markdown, outputDir, opts = {}) {
@@ -329,7 +427,6 @@ async function replaceMermaidWithImages(markdown, outputDir, opts = {}) {
   const path = require('path');
   fs.mkdirSync(outputDir, { recursive: true });
 
-  // Launch one browser for all diagrams
   const browser = await puppeteer.launch({
     headless: true,
     executablePath: resolveChromePath(),
@@ -341,24 +438,32 @@ async function replaceMermaidWithImages(markdown, outputDir, opts = {}) {
   try {
     for (let i = 0; i < blocks.length; i++) {
       const block = blocks[i];
-      const pngPath = path.join(outputDir, `mermaid-diagram-${i + 1}.png`);
 
-      const png = await renderToPng(block.code, { browser });
+      // Attempt 1: SVG (vector — infinitely zoomable)
+      const svgString = await renderToDocxSvg(block.code, { browser });
 
-      if (png) {
-        fs.writeFileSync(pngPath, png);
+      let imagePath = null;
 
-        // Build replacement: image + optional editable source
-        let replacement = `![Mermaid Diagram ${i + 1}](${pngPath})`;
+      if (svgString) {
+        imagePath = path.join(outputDir, `mermaid-diagram-${i + 1}.svg`);
+        fs.writeFileSync(imagePath, svgString, 'utf-8');
+      } else {
+        // Attempt 2: high-DPI PNG fallback (4x scale)
+        const png = await renderToPng(block.code, { browser });
+        if (png) {
+          imagePath = path.join(outputDir, `mermaid-diagram-${i + 1}.png`);
+          fs.writeFileSync(imagePath, png);
+        }
+      }
 
+      if (imagePath) {
+        let replacement = `![Mermaid Diagram ${i + 1}](${imagePath})`;
         if (includeSource) {
-          // Add source code in a collapsed/caption block so users can edit & regenerate
           replacement += `\n\n<!-- mermaid-source\n${block.code}\nmermaid-source -->`;
         }
-
         result = result.replace(block.fullMatch, replacement);
       }
-      // If rendering fails, leave the code block as-is
+      // If both renderers fail, leave the code block as-is
     }
   } finally {
     await browser.close();
@@ -371,6 +476,7 @@ module.exports = {
   extractMermaidBlocks,
   createMermaidPage,
   renderToSvg,
+  renderToDocxSvg,
   renderToPng,
   replaceMermaidWithImages,
 };

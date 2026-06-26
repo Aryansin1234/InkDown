@@ -19,7 +19,6 @@ const crypto = require('crypto');
 const { execFile } = require('child_process');
 const { analyze }  = require('./analyzer');
 const { replaceMermaidWithImages, extractMermaidBlocks } = require('./mermaidRenderer');
-const { parseFrontmatter, substituteVariables } = require('./frontmatter');
 
 // ── Helpers ───────────────────────────────────────────────────
 function tmpFile(ext) {
@@ -163,24 +162,15 @@ const REFERENCE_DOCX = path.join(__dirname, '..', 'reference.docx');
  * @param {boolean} [opts.autoBreak=false] - Auto page breaks before H1
  * @returns {Promise<{ buffer: Buffer, report: object }>}
  */
-async function convertToDocx(rawMarkdown, opts = {}) {
-  // Parse and strip YAML frontmatter from incoming markdown.
-  // Frontmatter data fills in any opts not explicitly provided by the caller.
-  const { data: fm, content: markdownBody } = parseFrontmatter(rawMarkdown);
-
+async function convertToDocx(markdown, opts = {}) {
   const {
-    title          = fm.title          || 'Document',
-    toc            = fm.toc            === true || false,
-    autoBreak      = fm.autoBreak      === true || false,
-    author         = fm.author         || '',
-    date           = fm.date           ? String(fm.date) : '',
-    numberSections = fm.numberSections === true || false,
-    landscape      = fm.landscape      === true || false,
-    referenceDoc   = fm.referenceDoc   || '',
+    title = 'Document',
+    toc = false,
+    autoBreak = false,
+    author = '',
+    date = '',
+    numberSections = false,
   } = opts;
-
-  // Variable substitution in the document body
-  const markdown = substituteVariables(markdownBody, fm);
 
   // 1. Run smart analyzer (skip grid table → HTML conversion; Pandoc handles them natively)
   const { markdown: cleanMd, report } = await analyze(markdown, {
@@ -199,7 +189,7 @@ async function convertToDocx(rawMarkdown, opts = {}) {
   const mermaidBlocks = extractMermaidBlocks(cleanMd);
   if (mermaidBlocks.length > 0) {
     const { markdown: mermaidProcessed, diagramCount } = await replaceMermaidWithImages(
-      cleanMd, mermaidTmpDir, { includeSource: false }
+      cleanMd, mermaidTmpDir, { includeSource: true }
     );
     processedMd = mermaidProcessed;
     mermaidCleanupDir = mermaidTmpDir;
@@ -272,15 +262,9 @@ async function convertToDocx(rawMarkdown, opts = {}) {
     //   args.push(`--lua-filter=${tableStyleFilter}`);
     // }
 
-    // Reference template — prefer caller-supplied path, then default reference.docx
-    const activeRefDoc = referenceDoc || REFERENCE_DOCX;
-    if (fs.existsSync(activeRefDoc)) {
-      args.push(`--reference-doc=${activeRefDoc}`);
-    }
-
-    // Landscape orientation
-    if (landscape) {
-      args.push('-V', 'geometry:landscape');
+    // Reference template (custom styles, header/footer, margins)
+    if (fs.existsSync(REFERENCE_DOCX)) {
+      args.push(`--reference-doc=${REFERENCE_DOCX}`);
     }
 
     // Numbered sections (1., 1.1, 1.1.1, etc.)
