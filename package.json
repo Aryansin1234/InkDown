@@ -9,11 +9,14 @@
   "scripts": {
     "dev": "node server.js",
     "start": "node server.js",
+    "mcp": "node src/mcpServer.js",
+    "mcp:http": "node src/mcpServer.js --http",
     "convert": "node src/cli.js",
     "test": "node src/cli.js samples/master-test.md output/test.pdf",
     "test:docx": "node src/cli.js --format docx samples/master-test.md output/test.docx"
   },
   "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
     "adm-zip": "^0.5.17",
     "cors": "^2.8.6",
     "express": "^5.2.1",
